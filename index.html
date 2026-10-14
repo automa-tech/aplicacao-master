@@ -1,28 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spiltag | Sistema de Aplicação de Master</title>
-  <style>
-    :root { font-family: Arial, Helvetica, sans-serif; color: #263343; background: #f5f7fa; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
-    main { width: min(100%, 520px); background: white; border-radius: 18px; padding: 38px 30px; text-align: center; box-shadow: 0 12px 38px #1c273414; }
-    h1 { font-size: 25px; line-height: 1.25; margin: 0 0 12px; }
-    p { line-height: 1.6; color: #5b6571; }
-    .status { display: inline-flex; gap: 9px; align-items: center; margin-top: 16px; border-radius: 99px; padding: 10px 15px; background: #eaf8ee; color: #166534; font-weight: 700; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; }
-    small { display: block; margin-top: 25px; color: #788390; }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spiltag | Teste de Integração</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f5f8;font:16px Arial,sans-serif;color:#22334b;padding:20px}.card{background:white;padding:38px;border-radius:22px;max-width:600px;width:100%;text-align:center;box-shadow:0 15px 35px #14263d13}h1{font-size:26px}button{background:#197344;color:white;border:0;border-radius:12px;padding:15px 24px;font-weight:bold;cursor:pointer}button:disabled{opacity:.6;cursor:wait}#status{margin-top:22px;line-height:1.6;overflow-wrap:anywhere}.note{color:#697789;font-size:14px}</style>
 </head>
-<body>
-  <main>
-    <h1>Sistema de Aplicação de Master</h1>
-    <p>SPILTAG</p>
-    <div class="status"><span class="dot"></span> Interface GitHub Pages ativa</div>
-    <p>Ambiente inicial de testes. Login e integração com o banco de dados ainda não estão habilitados.</p>
-    <small>Etapa 1.10 • Teste de publicação</small>
-  </main>
-</body>
-</html>
+<body><main class="card"><h1>Sistema de Aplicação de Master</h1><p>SPILTAG — Teste de comunicação</p><button id="testar">Testar conexão com Apps Script</button><div id="status" role="status" aria-live="polite">Aguardando teste.</div><p class="note">Este teste não acessa a planilha e não realiza login.</p></main>
+<script>
+'use strict';
+const ENDPOINT='https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
+const botao=document.getElementById('testar');const status=document.getElementById('status');
+botao.addEventListener('click',async()=>{botao.disabled=true;status.textContent='Consultando o Apps Script...';try{const resposta=await fetch(ENDPOINT,{method:'GET',redirect:'follow',cache:'no-store'});if(!resposta.ok)throw new Error('HTTP '+resposta.status);const dados=await resposta.json();if(dados.sucesso===true&&dados.status==='ONLINE'){status.textContent='Conexão confirmada: '+dados.sistema+' — ONLINE';}else{status.textContent='Resposta recebida, mas inesperada: '+JSON.stringify(dados);}}catch(erro){status.textContent='Não foi possível ler a resposta no navegador. Possível bloqueio de CORS ou rede: '+erro.message+'. Isso não significa que o Apps Script esteja offline.';}finally{botao.disabled=false;}});
+</script></body></html>
