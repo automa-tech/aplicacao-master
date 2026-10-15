@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SPILTAG | Sistema de Aplicação de Master</title>
+  <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root{font-family:Arial,Helvetica,sans-serif;color:#253044;background:#f5f7fa}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow-x:hidden}
@@ -16,6 +17,8 @@
     .notice.error{background:#fff0f0;color:#a21c27}.notice.ok{background:#eef7f1;color:#236d43}
     footer{text-align:center;font-size:12px;color:#86909b;margin-top:24px}.waves{position:fixed;left:0;right:0;bottom:0;height:110px;background:#d22934;clip-path:polygon(0 62%,15% 48%,32% 65%,52% 35%,75% 62%,100% 25%,100% 100%,0 100%);opacity:.9}.waves:after{content:'';position:absolute;inset:22px 0 0;background:#a7abb1;clip-path:polygon(0 65%,22% 45%,46% 70%,73% 35%,100% 60%,100% 100%,0 100%)}
     body.inicio main{width:min(100%,780px)}
+    body.gestao main{width:min(100%,940px)}
+    .acoes-importar{display:flex;gap:12px;flex-wrap:wrap}.acoes-importar button{flex:1}.tabela-previa{width:100%;border-collapse:collapse;font-size:12px}.tabela-previa th,.tabela-previa td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left}.tabela-previa th{background:#f2f4f7}.arquivo{border:1px dashed #bfc8d4;border-radius:9px;padding:15px;background:#fafbfd}.secundario{background:#eef0f3;color:#3b4755}
     .painel-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0 8px;flex-wrap:wrap}
     .painel-topo p{text-align:left;margin:4px 0}.relogio{font-size:14px;font-weight:700;color:#465365;text-align:right}
     .indicador{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#556171}
@@ -60,8 +63,8 @@
         <button id="botaoProducao" class="cartao producao" type="button">
           PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Consulta de OP disponível</small>
         </button>
-        <button id="botaoGestao" class="cartao gestao" type="button" disabled hidden>
-          GESTÃO<small>Cadastros, importações e relatórios<br>Módulo em desenvolvimento</small>
+        <button id="botaoGestao" class="cartao gestao" type="button" hidden>
+          GESTÃO<small>Importação da estrutura Protheus disponível<br>Outros módulos em desenvolvimento</small>
         </button>
       </div>
       <div class="notice" id="avisoPainel" role="status">Painel inicial disponível. As operações serão ativadas nas próximas etapas.</div>
@@ -89,7 +92,22 @@
       </section>
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.46</footer>
+    <section id="telaGestao" hidden>
+      <h2 style="font-size:20px;margin-top:24px">GESTÃO — Importação de estruturas</h2>
+      <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
+      <label for="arquivoEstrutura">Arquivo de estrutura (.xlsx)</label>
+      <input id="arquivoEstrutura" class="arquivo" type="file" accept=".xlsx">
+      <div id="avisoImportacao" class="notice" role="status" aria-live="polite">Nenhum arquivo selecionado.</div>
+      <div id="resumoImportacao" class="resultado" hidden>
+        <div id="contadoresImportacao" class="dados-op"></div>
+        <p id="alertasImportacao" style="text-align:left"></p>
+        <div style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Produto</th><th>Descrição</th><th>Peso líquido</th><th>Componente</th><th>Grupo</th><th>Aplicação</th></tr></thead><tbody id="previaImportacao"></tbody></table></div>
+        <p style="text-align:left;font-size:12px">Prévia das primeiras 12 linhas. Ao confirmar, os cadastros anteriores de PRODUTOS e ESTRUTURAS serão substituídos. ADITIVOS e demais abas serão preservados.</p>
+        <button id="confirmarImportacao" type="button" disabled>Confirmar importação</button>
+      </div>
+      <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
+    </section>
+    <footer>SPILTAG • Sistema interno • Etapa 1.47</footer>
   </main>
   <div class="waves" aria-hidden="true"></div>
   <script>
@@ -106,6 +124,10 @@
     let expiraEm = 0;
     let ocupado = false;
     const telaProducao = document.getElementById('telaProducao');
+    const telaGestao = document.getElementById('telaGestao');
+    let perfilSessao = '';
+    let linhasImportacao = null;
+    let nomeArquivoImportacao = '';
 
     function mensagem(texto, erro) {
       aviso.textContent = texto;
@@ -130,6 +152,10 @@
       senha.value = '';
       telaInicial.hidden = true;
       telaProducao.hidden = true;
+      telaGestao.hidden = true;
+      perfilSessao = '';
+      linhasImportacao = null;
+      document.body.classList.remove('gestao');
       telaLogin.hidden = false;
       document.body.classList.remove('inicio');
       mensagem(texto || 'Informe sua matrícula e senha para acessar.', false);
@@ -137,10 +163,13 @@
     function mostrarInicial(dados) {
       document.getElementById('bemVindo').textContent = 'Bem-vindo(a), ' + String(dados.nome || 'colaborador(a)');
       document.getElementById('perfilAtual').textContent = 'Perfil: ' + (dados.perfil === 'GESTAO' ? 'Gestão' : 'Produção');
+      perfilSessao = dados.perfil;
       document.getElementById('botaoGestao').hidden = dados.perfil !== 'GESTAO';
       telaLogin.hidden = true;
       telaInicial.hidden = false;
       telaProducao.hidden = true;
+      telaGestao.hidden = true;
+      document.body.classList.remove('gestao');
       document.body.classList.add('inicio');
       atualizarRelogio();
       atualizarStatusConexao();
@@ -188,6 +217,72 @@
       telaInicial.hidden = true;
       telaProducao.hidden = false;
       document.getElementById('etiquetaOP').focus();
+    });
+    document.getElementById('botaoGestao').addEventListener('click', function() {
+      if (!tokenSessao || perfilSessao !== 'GESTAO') return;
+      telaInicial.hidden = true;
+      telaGestao.hidden = false;
+      document.body.classList.add('gestao');
+    });
+    document.getElementById('voltarGestao').addEventListener('click', function() {
+      telaGestao.hidden = true;
+      telaInicial.hidden = false;
+      document.body.classList.remove('gestao');
+    });
+    document.getElementById('arquivoEstrutura').addEventListener('change', async function() {
+      const arquivo = this.files && this.files[0];
+      const aviso = document.getElementById('avisoImportacao');
+      const resumo = document.getElementById('resumoImportacao');
+      const confirmar = document.getElementById('confirmarImportacao');
+      confirmar.disabled = true; resumo.hidden = true; linhasImportacao = null;
+      if (!arquivo) {aviso.textContent = 'Nenhum arquivo selecionado.';return;}
+      if (!/\.xlsx$/i.test(arquivo.name) || arquivo.size > 5000000) {aviso.textContent='Selecione um .xlsx de até 5 MB.';return;}
+      if (typeof XLSX === 'undefined') {aviso.textContent='Leitor Excel indisponível. Verifique a conexão com a biblioteca SheetJS.';return;}
+      aviso.textContent='Lendo Excel...';
+      try {
+        const wb = XLSX.read(await arquivo.arrayBuffer(), {type:'array',raw:true});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const matriz=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+        const cab=matriz.findIndex(r=>String(r[0]).trim().toUpperCase()==='CODIGO' && String(r[3]).trim().toUpperCase()==='CODIGO');
+        if (cab<0 || !String(matriz[cab][10]).toUpperCase().includes('APLICA')) throw new Error('Cabeçalho diferente do modelo Protheus esperado.');
+        const linhas=[];const produtos=new Set();const somas=new Map();const problemas=[];
+        for (let i=cab+1;i<matriz.length;i++) {
+          const r=matriz[i];if(!r||!r.some(x=>String(x).trim()))continue;
+          const produto=String(r[0]).trim(),componente=String(r[3]).trim();
+          const peso=Number(String(r[2]).replace(',','.'));
+          const percentual=Number(String(r[10]).replace(',','.'))*100; // No Excel: 0,955 = 95,5%.
+          if(!produto) {problemas.push('Linha '+(i+1)+': produto vazio');continue;}
+          produtos.add(produto);
+          if(componente && (!Number.isFinite(percentual)||percentual<0||percentual>100)) problemas.push('Linha '+(i+1)+': percentual inválido');
+          if(componente) somas.set(produto,(somas.get(produto)||0)+percentual);
+          linhas.push({produto,descricao:String(r[1]).trim(),peso,componente,grupo:String(r[4]).trim(),descricaoComponente:String(r[5]).trim(),percentual:componente?Math.round(percentual*1000000)/1000000:0});
+        }
+        if(!linhas.length||linhas.length>5000) throw new Error('Quantidade de linhas inválida (limite 5.000).');
+        for(const p of produtos) if(!somas.has(p)||Math.abs(somas.get(p)-100)>0.05) problemas.push('Produto '+p+': total '+(somas.get(p)||0).toFixed(3)+'%');
+        const c=document.getElementById('contadoresImportacao');c.replaceChildren();
+        for(const [k,v] of [['Produtos',produtos.size],['Componentes',linhas.filter(x=>x.componente).length],['Linhas',linhas.length],['Problemas',problemas.length]]){const span=document.createElement('span');span.textContent=k+': '+v;c.appendChild(span);}
+        const tbody=document.getElementById('previaImportacao');tbody.replaceChildren();
+        for(const r of linhas.slice(0,12)){const tr=document.createElement('tr');for(const v of [r.produto,r.descricao,r.peso,r.componente,r.grupo,r.componente?r.percentual+'%':'—']){const td=document.createElement('td');td.textContent=String(v);tr.appendChild(td);}tbody.appendChild(tr);}
+        document.getElementById('alertasImportacao').textContent=problemas.length?'Problemas: '+problemas.slice(0,8).join(' | '):'Pré-validação concluída. Confirme para gravar.';
+        linhasImportacao=linhas;nomeArquivoImportacao=arquivo.name;
+        const tamanho=JSON.stringify({acao:'importarEstruturas147',token:tokenSessao,arquivo:arquivo.name,linhas}).length;
+        if(tamanho>900000) problemas.push('Arquivo excede o limite de transmissão de 900 KB.');
+        confirmar.disabled=problemas.length>0;
+        resumo.hidden=false;
+        aviso.textContent=problemas.length?'Corrija o arquivo antes de importar.':'Arquivo lido. Nenhuma alteração gravada ainda.';
+      } catch(err) {aviso.textContent='Não foi possível ler o arquivo: '+err.message;}
+    });
+    document.getElementById('confirmarImportacao').addEventListener('click', async function() {
+      if(!tokenSessao||perfilSessao!=='GESTAO'||!linhasImportacao)return;
+      if(!confirm('Confirmar a substituição de PRODUTOS e ESTRUTURAS pelos dados deste Excel?'))return;
+      const botao=this;botao.disabled=true;
+      const aviso=document.getElementById('avisoImportacao');aviso.textContent='Gravando importação...';
+      try {
+        const r=await requisicao({acao:'importarEstruturas147',token:tokenSessao,arquivo:nomeArquivoImportacao,linhas:linhasImportacao});
+        aviso.textContent=r.sucesso?'Importação concluída: '+r.produtos+' produtos e '+r.componentes+' componentes.':(r.mensagem||'Importação rejeitada.');
+        if(r.sucesso){linhasImportacao=null;document.getElementById('arquivoEstrutura').value='';}
+        else botao.disabled=false;
+      }catch(_){aviso.textContent='Falha de comunicação. Confira o histórico antes de tentar novamente.';}
     });
     document.getElementById('voltarInicio').addEventListener('click', function() {
       telaProducao.hidden = true;
@@ -239,7 +334,7 @@
       document.getElementById('statusConexao').textContent = online ? 'Navegador conectado' : 'Sem conexão de rede';
     }
     setInterval(function() {
-      if (!telaInicial.hidden || !telaProducao.hidden) {
+      if (!telaInicial.hidden || !telaProducao.hidden || !telaGestao.hidden) {
         atualizarRelogio();
         if (tokenSessao && expiraEm && Date.now() >= expiraEm) mostrarLogin('Sua sessão expirou. Entre novamente.');
       }
