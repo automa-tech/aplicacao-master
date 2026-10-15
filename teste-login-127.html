@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spiltag | Diagnóstico 1.27</title>
+<style>body{font-family:Arial,sans-serif;background:#f4f6f9;color:#243044;margin:0;padding:32px}main{max-width:640px;margin:35px auto;background:#fff;padding:32px;border-radius:20px;box-shadow:0 12px 30px #1b273012}img{display:block;max-width:130px;max-height:100px;object-fit:contain;margin:0 auto 22px}h1{text-align:center;font-size:25px}p{line-height:1.5}button{width:100%;border:0;border-radius:10px;background:#c81930;color:white;padding:16px;font-size:16px;font-weight:bold;cursor:pointer}button:disabled{opacity:.6}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f0f2f5;padding:18px;border-radius:10px}a{color:#c81930}</style>
+</head><body><main><img src="logo-spiltag.png" alt="Logo Spiltag"><h1>Diagnóstico de integração — 1.27</h1><p>Este teste envia somente um identificador fictício. <strong>Não digite credenciais reais nesta página.</strong></p><button id="btn">Testar endpoint público</button><h3>Resultado</h3><pre id="resultado">Aguardando teste.</pre><a href="index.html">Voltar ao login</a></main>
+<script>
+'use strict';
+const ENDPOINT='https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
+const botao=document.getElementById('btn');
+const saida=document.getElementById('resultado');
+botao.addEventListener('click',async()=>{
+ botao.disabled=true;saida.textContent='Enviando requisição de diagnóstico...';
+ try{
+  const resposta=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'diagnostico_127',identificador:'TESTE_SEM_CREDENCIAIS'}),redirect:'follow',cache:'no-store'});
+  const texto=await resposta.text();
+  let corpo;try{corpo=JSON.parse(texto)}catch{corpo={mensagem:'Resposta não JSON',amostra:texto.slice(0,300)}}
+  saida.textContent='HTTP: '+resposta.status+'\nResposta legível: SIM\nConteúdo:\n'+JSON.stringify(corpo,null,2)+'\n\nObservação: isso não comprova a segurança de um login real.';
+ }catch(erro){saida.textContent='Falha de comunicação: '+String(erro.message)+'\nNenhuma credencial foi transmitida.'}
+ finally{botao.disabled=false}
+});
+</script></body></html>
