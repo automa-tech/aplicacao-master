@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPILTAG | Teste de comunicação</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f3f5f8;font:16px Arial,sans-serif;color:#243047;display:grid;place-items:center;min-height:100vh;padding:20px}
+    main{background:white;max-width:580px;width:100%;padding:32px;border-radius:18px;box-shadow:0 14px 35px #172d4815}
+    img{display:block;max-width:180px;max-height:85px;object-fit:contain;margin:0 auto 20px}h1{text-align:center;font-size:23px}p{line-height:1.5}
+    button{width:100%;padding:16px;background:#c82033;border:0;color:white;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer}
+    button:disabled{opacity:.6;cursor:wait}pre{white-space:pre-wrap;word-break:break-word;background:#f1f3f6;padding:18px;border-radius:10px;min-height:100px;font-size:14px}
+    a{color:#b41e2d}
+  </style>
+</head>
+<body>
+<main>
+  <img src="logo-spiltag.png" alt="Logo Spiltag">
+  <h1>Teste de comunicação</h1>
+  <p>Este teste envia somente uma mensagem fictícia ao Apps Script. <strong>Não informe matrícula ou senha nesta página.</strong></p>
+  <button id="testar" type="button">Testar requisição POST</button>
+  <h2>Resultado</h2>
+  <pre id="resultado" aria-live="polite">Aguardando teste.</pre>
+  <p><a href="index.html">Voltar ao login</a></p>
+</main>
+<script>
+'use strict';
+const URL_SCRIPT = 'https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
+const botao = document.getElementById('testar');
+const saida = document.getElementById('resultado');
+botao.addEventListener('click', async () => {
+  botao.disabled = true;
+  saida.textContent = 'Enviando requisição de teste...';
+  try {
+    const resposta = await fetch(URL_SCRIPT, {
+      method: 'POST',
+      mode: 'cors',
+      redirect: 'follow',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({acao: 'TESTE_TRANSPORTE', valor: 'SEM_CREDENCIAIS'})
+    });
+    const corpo = await resposta.text();
+    saida.textContent = 'HTTP: ' + resposta.status + '\n' +
+      'Resposta legível pelo navegador: SIM\n\n' +
+      'Conteúdo:\n' + corpo.slice(0, 1200);
+  } catch (erro) {
+    saida.textContent = 'Não foi possível ler a resposta pelo navegador.\n\n' +
+      'Erro: ' + erro.message + '\n\n' +
+      'Pode ser uma restrição de CORS/redirecionamento do Apps Script ou uma falha de rede. ' +
+      'Não significa que a senha esteja incorreta.';
+  } finally {
+    botao.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
