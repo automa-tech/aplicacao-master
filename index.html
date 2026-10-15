@@ -11,32 +11,138 @@
     .brand{text-align:center}.brand img{display:block;width:auto;max-width:220px;max-height:80px;height:auto;object-fit:contain;margin:0 auto}
     h1{text-align:center;font-size:21px;font-weight:600;margin:20px 0 8px}p{text-align:center;color:#687586;font-size:14px;line-height:1.5}
     label{display:block;font-size:13px;font-weight:700;margin:22px 0 8px}input{width:100%;padding:13px 14px;border:1px solid #d1d8e1;border-radius:9px;font-size:16px;outline:none}input:focus{border-color:#be2430;box-shadow:0 0 0 3px #be24301a}
-    button{width:100%;padding:14px;border:0;border-radius:9px;background:#b9232e;color:white;font-size:15px;font-weight:700;margin-top:24px;cursor:not-allowed;opacity:.65}
+    button{width:100%;padding:14px;border:0;border-radius:9px;background:#b9232e;color:white;font-size:15px;font-weight:700;margin-top:24px;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.65}
     .notice{padding:12px;background:#f4f5f7;border-radius:9px;margin-top:18px;color:#556171;font-size:12px;line-height:1.5;text-align:center}
+    .notice.error{background:#fff0f0;color:#a21c27}.notice.ok{background:#eef7f1;color:#236d43}
     footer{text-align:center;font-size:12px;color:#86909b;margin-top:24px}.waves{position:fixed;left:0;right:0;bottom:0;height:110px;background:#d22934;clip-path:polygon(0 62%,15% 48%,32% 65%,52% 35%,75% 62%,100% 25%,100% 100%,0 100%);opacity:.9}.waves:after{content:'';position:absolute;inset:22px 0 0;background:#a7abb1;clip-path:polygon(0 65%,22% 45%,46% 70%,73% 35%,100% 60%,100% 100%,0 100%)}
+    [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
 </head>
 <body>
   <main>
     <div class="brand"><img src="logo-spiltag.png" alt="Logo Spiltag"></div>
     <h1>Sistema de Aplicação de Master</h1>
-    <p>Acesso de colaboradores</p>
-    <form id="login" autocomplete="off">
-      <label for="matricula">Matrícula</label>
-      <input id="matricula" name="matricula" inputmode="numeric" autocomplete="username" placeholder="Digite sua matrícula" required>
-      <label for="senha">Senha</label>
-      <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
-      <button type="submit" disabled aria-disabled="true">Entrar — aguardando liberação</button>
-    </form>
-    <div class="notice" role="status">A autenticação ainda não foi habilitada. Não digite credenciais reais nesta versão de teste.</div>
-    <footer>SPILTAG • Sistema interno • Etapa 1.21</footer>
+    <section id="telaLogin">
+      <p>Acesso de colaboradores</p>
+      <form id="login" autocomplete="on">
+        <label for="matricula">Matrícula</label>
+        <input id="matricula" name="matricula" inputmode="numeric" autocomplete="username" maxlength="20" placeholder="Digite sua matrícula" required pattern="[0-9]{1,20}">
+        <label for="senha">Senha</label>
+        <input id="senha" name="senha" type="password" autocomplete="current-password" maxlength="256" placeholder="Digite sua senha" required>
+        <button id="entrar" type="submit">Entrar</button>
+      </form>
+      <div id="avisoLogin" class="notice" role="status" aria-live="polite">Informe sua matrícula e senha para acessar.</div>
+    </section>
+    <section id="telaInicial" hidden>
+      <p class="welcome" id="bemVindo"></p>
+      <p id="perfilAtual"></p>
+      <div class="menu">
+        <button class="producao" type="button" disabled title="Módulo em desenvolvimento">PRODUÇÃO — em desenvolvimento</button>
+        <button id="botaoGestao" class="gestao" type="button" disabled hidden title="Módulo em desenvolvimento">GESTÃO — em desenvolvimento</button>
+        <button id="sair" class="sair" type="button">Sair</button>
+      </div>
+      <div class="notice ok">Autenticação realizada. As funções operacionais serão liberadas nas próximas etapas.</div>
+    </section>
+    <footer>SPILTAG • Sistema interno • Etapa 1.40</footer>
   </main>
   <div class="waves" aria-hidden="true"></div>
   <script>
     'use strict';
-    // Segurança: nesta etapa nenhum dado é transmitido ou armazenado.
-    document.getElementById('login').addEventListener('submit', function(event) {
+    const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
+    const form = document.getElementById('login');
+    const matricula = document.getElementById('matricula');
+    const senha = document.getElementById('senha');
+    const entrar = document.getElementById('entrar');
+    const aviso = document.getElementById('avisoLogin');
+    const telaLogin = document.getElementById('telaLogin');
+    const telaInicial = document.getElementById('telaInicial');
+    let tokenSessao = null; // Somente na memória desta página; nunca em localStorage.
+    let expiraEm = 0;
+    let ocupado = false;
+
+    function mensagem(texto, erro) {
+      aviso.textContent = texto;
+      aviso.className = erro ? 'notice error' : 'notice';
+    }
+    async function requisicao(dados) {
+      const resposta = await fetch(ENDPOINT, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: {'Content-Type': 'text/plain;charset=UTF-8'},
+        body: JSON.stringify(dados),
+        cache: 'no-store'
+      });
+      if (!resposta.ok) throw new Error('Falha de comunicação com o servidor.');
+      const resultado = await resposta.json();
+      if (!resultado || typeof resultado !== 'object') throw new Error('Resposta inválida do servidor.');
+      return resultado;
+    }
+    function mostrarLogin(texto) {
+      tokenSessao = null;
+      expiraEm = 0;
+      senha.value = '';
+      telaInicial.hidden = true;
+      telaLogin.hidden = false;
+      mensagem(texto || 'Informe sua matrícula e senha para acessar.', false);
+    }
+    function mostrarInicial(dados) {
+      document.getElementById('bemVindo').textContent = 'Bem-vindo(a), ' + String(dados.nome || 'colaborador(a)');
+      document.getElementById('perfilAtual').textContent = 'Perfil: ' + (dados.perfil === 'GESTAO' ? 'Gestão' : 'Produção');
+      document.getElementById('botaoGestao').hidden = dados.perfil !== 'GESTAO';
+      telaLogin.hidden = true;
+      telaInicial.hidden = false;
+      senha.value = '';
+    }
+    form.addEventListener('submit', async function(event) {
       event.preventDefault();
+      if (ocupado) return;
+      const usuario = matricula.value.trim();
+      if (!/^\d{1,20}$/.test(usuario) || !senha.value) {
+        mensagem('Informe uma matrícula válida e sua senha.', true);
+        return;
+      }
+      ocupado = true;
+      entrar.disabled = true;
+      entrar.textContent = 'Validando acesso...';
+      try {
+        const dados = await requisicao({acao:'login',matricula:usuario,senha:senha.value});
+        if (!dados.sucesso || !/^[a-f0-9]{64}$/i.test(String(dados.token || ''))) {
+          mensagem(dados.mensagem || 'Não foi possível entrar.', true);
+          senha.value = '';
+          return;
+        }
+        // Verifica a sessão no servidor antes de exibir o perfil.
+        const confirmacao = await requisicao({acao:'sessao',token:dados.token});
+        if (!confirmacao.sucesso || !['GESTAO','PRODUCAO'].includes(confirmacao.perfil)) {
+          mensagem('Não foi possível validar a sessão.', true);
+          senha.value = '';
+          return;
+        }
+        tokenSessao = dados.token;
+        expiraEm = Number(dados.expiraEm) || 0;
+        mostrarInicial(confirmacao);
+      } catch (erro) {
+        mensagem('Não foi possível conectar ao sistema. Verifique a conexão e tente novamente.', true);
+        senha.value = '';
+      } finally {
+        ocupado = false;
+        entrar.disabled = false;
+        entrar.textContent = 'Entrar';
+      }
+    });
+    document.getElementById('sair').addEventListener('click', async function() {
+      const token = tokenSessao;
+      mostrarLogin('Sessão encerrada neste navegador.');
+      if (token) {
+        try { await requisicao({acao:'logout',token}); }
+        catch (_) { mensagem('A sessão foi removida desta página, mas não foi possível confirmar a saída no servidor.', true); }
+      }
+    });
+    // A sessão não é persistida: recarregar a página exige novo login.
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && tokenSessao && expiraEm && Date.now() >= expiraEm) {
+        mostrarLogin('Sua sessão expirou. Entre novamente.');
+      }
     });
   </script>
 </body>
