@@ -15,6 +15,19 @@
     .notice{padding:12px;background:#f4f5f7;border-radius:9px;margin-top:18px;color:#556171;font-size:12px;line-height:1.5;text-align:center}
     .notice.error{background:#fff0f0;color:#a21c27}.notice.ok{background:#eef7f1;color:#236d43}
     footer{text-align:center;font-size:12px;color:#86909b;margin-top:24px}.waves{position:fixed;left:0;right:0;bottom:0;height:110px;background:#d22934;clip-path:polygon(0 62%,15% 48%,32% 65%,52% 35%,75% 62%,100% 25%,100% 100%,0 100%);opacity:.9}.waves:after{content:'';position:absolute;inset:22px 0 0;background:#a7abb1;clip-path:polygon(0 65%,22% 45%,46% 70%,73% 35%,100% 60%,100% 100%,0 100%)}
+    body.inicio main{width:min(100%,780px)}
+    .painel-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0 8px;flex-wrap:wrap}
+    .painel-topo p{text-align:left;margin:4px 0}.relogio{font-size:14px;font-weight:700;color:#465365;text-align:right}
+    .indicador{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#556171}
+    .bolinha{width:8px;height:8px;border-radius:50%;background:#9299a4;display:inline-block}
+    .bolinha.online{background:#23844d}.bolinha.offline{background:#c23640}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:22px 0}
+    .cartao{min-height:160px;border:0;border-radius:14px;color:white;text-align:left;padding:24px;display:flex;flex-direction:column;justify-content:center;gap:12px;font-size:21px;font-weight:700;margin:0;box-shadow:0 8px 20px #1b2a4014}
+    .cartao small{font-size:13px;font-weight:400;line-height:1.4;opacity:.94}
+    .cartao.producao{background:#26844c}.cartao.gestao{background:#245d98}
+    .cartao:disabled{opacity:.65;cursor:not-allowed}.cartao[hidden]{display:none!important}
+    .linha-acoes{display:flex;justify-content:flex-end}.linha-acoes button{width:auto;margin:8px 0 0;background:#eef0f3;color:#3b4755;padding:11px 25px}
+    @media(max-width:600px){.cards{grid-template-columns:1fr}.cartao{min-height:130px}.painel-topo{align-items:flex-start}.relogio{text-align:left}}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
 </head>
@@ -34,16 +47,26 @@
       <div id="avisoLogin" class="notice" role="status" aria-live="polite">Informe sua matrícula e senha para acessar.</div>
     </section>
     <section id="telaInicial" hidden>
-      <p class="welcome" id="bemVindo"></p>
-      <p id="perfilAtual"></p>
-      <div class="menu">
-        <button class="producao" type="button" disabled title="Módulo em desenvolvimento">PRODUÇÃO — em desenvolvimento</button>
-        <button id="botaoGestao" class="gestao" type="button" disabled hidden title="Módulo em desenvolvimento">GESTÃO — em desenvolvimento</button>
-        <button id="sair" class="sair" type="button">Sair</button>
+      <div class="painel-topo">
+        <div>
+          <p class="welcome" id="bemVindo"></p>
+          <p id="perfilAtual"></p>
+          <div class="indicador"><span id="pontoConexao" class="bolinha"></span><span id="statusConexao">Verificando conexão...</span></div>
+        </div>
+        <div id="relogio" class="relogio" aria-label="Data e hora"></div>
       </div>
-      <div class="notice ok">Autenticação realizada. As funções operacionais serão liberadas nas próximas etapas.</div>
+      <div class="cards">
+        <button id="botaoProducao" class="cartao producao" type="button" disabled>
+          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Módulo em desenvolvimento</small>
+        </button>
+        <button id="botaoGestao" class="cartao gestao" type="button" disabled hidden>
+          GESTÃO<small>Cadastros, importações e relatórios<br>Módulo em desenvolvimento</small>
+        </button>
+      </div>
+      <div class="notice" id="avisoPainel" role="status">Painel inicial disponível. As operações serão ativadas nas próximas etapas.</div>
+      <div class="linha-acoes"><button id="sair" type="button">Sair do sistema</button></div>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.40</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.45</footer>
   </main>
   <div class="waves" aria-hidden="true"></div>
   <script>
@@ -83,6 +106,7 @@
       senha.value = '';
       telaInicial.hidden = true;
       telaLogin.hidden = false;
+      document.body.classList.remove('inicio');
       mensagem(texto || 'Informe sua matrícula e senha para acessar.', false);
     }
     function mostrarInicial(dados) {
@@ -91,6 +115,9 @@
       document.getElementById('botaoGestao').hidden = dados.perfil !== 'GESTAO';
       telaLogin.hidden = true;
       telaInicial.hidden = false;
+      document.body.classList.add('inicio');
+      atualizarRelogio();
+      atualizarStatusConexao();
       senha.value = '';
     }
     form.addEventListener('submit', async function(event) {
@@ -138,6 +165,24 @@
         catch (_) { mensagem('A sessão foi removida desta página, mas não foi possível confirmar a saída no servidor.', true); }
       }
     });
+    function atualizarRelogio() {
+      document.getElementById('relogio').textContent = new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'short', timeStyle: 'medium'
+      }).format(new Date());
+    }
+    function atualizarStatusConexao() {
+      const online = navigator.onLine;
+      document.getElementById('pontoConexao').className = 'bolinha ' + (online ? 'online' : 'offline');
+      document.getElementById('statusConexao').textContent = online ? 'Navegador conectado' : 'Sem conexão de rede';
+    }
+    setInterval(function() {
+      if (!telaInicial.hidden) {
+        atualizarRelogio();
+        if (tokenSessao && expiraEm && Date.now() >= expiraEm) mostrarLogin('Sua sessão expirou. Entre novamente.');
+      }
+    }, 1000);
+    window.addEventListener('online', atualizarStatusConexao);
+    window.addEventListener('offline', atualizarStatusConexao);
     // A sessão não é persistida: recarregar a página exige novo login.
     document.addEventListener('visibilitychange', function() {
       if (!document.hidden && tokenSessao && expiraEm && Date.now() >= expiraEm) {
