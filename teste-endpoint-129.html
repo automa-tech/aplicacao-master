@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spiltag | Diagnóstico 1.29</title>
+<style>body{font-family:Arial,sans-serif;background:#f3f5f8;color:#233149;margin:0;padding:32px}main{max-width:620px;margin:auto;background:white;padding:30px;border-radius:18px;box-shadow:0 10px 32px #17243b12}img{display:block;max-width:130px;max-height:100px;object-fit:contain;margin:0 auto 18px}h1{text-align:center;font-size:24px}button{width:100%;padding:16px;background:#cf1830;border:0;color:white;font-weight:bold;border-radius:10px;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef0f4;padding:18px;border-radius:10px}small{color:#657080}</style>
+</head>
+<body><main><img src="logo-spiltag.png" alt="Spiltag"><h1>Diagnóstico público — Etapa 1.29</h1><p>Não informe matrícula ou senha nesta página.</p><button id="testar">Testar endpoint</button><pre id="saida">Aguardando teste.</pre><small>Este teste não habilita autenticação.</small></main>
+<script>
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
+document.getElementById('testar').addEventListener('click', async () => {
+ const saida = document.getElementById('saida'); saida.textContent='Testando...';
+ try {
+  const resposta = await fetch(ENDPOINT, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'diagnostico_publico_129'}),redirect:'follow'});
+  const texto = await resposta.text();
+  saida.textContent = 'HTTP: '+resposta.status+'\nResposta legível: SIM\n'+texto;
+ } catch (erro) {saida.textContent='Falha na comunicação: '+erro.message;}
+});
+</script></body></html>
