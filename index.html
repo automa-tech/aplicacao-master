@@ -27,6 +27,7 @@
     .cartao.producao{background:#26844c}.cartao.gestao{background:#245d98}
     .cartao:disabled{opacity:.65;cursor:not-allowed}.cartao[hidden]{display:none!important}
     .linha-acoes{display:flex;justify-content:flex-end}.linha-acoes button{width:auto;margin:8px 0 0;background:#eef0f3;color:#3b4755;padding:11px 25px}
+    .campo-grupo{display:grid;grid-template-columns:1fr 1fr;gap:14px}.campo-grupo label{margin-top:12px}.resultado{margin-top:18px;border:1px solid #e2e6eb;border-radius:12px;padding:16px}.resultado p{text-align:left}.tabela-componentes{width:100%;border-collapse:collapse;font-size:12px}.tabela-componentes th,.tabela-componentes td{padding:8px;border-bottom:1px solid #e4e7eb;text-align:left}.tabela-componentes{overflow-wrap:anywhere}.voltar{background:#eef0f3;color:#3b4755}.alerta-estrutura{color:#a21c27;font-weight:700}.dados-op{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:14px;margin:12px 0}.dados-op span{background:#f4f5f7;padding:10px;border-radius:8px}
     @media(max-width:600px){.cards{grid-template-columns:1fr}.cartao{min-height:130px}.painel-topo{align-items:flex-start}.relogio{text-align:left}}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
@@ -56,8 +57,8 @@
         <div id="relogio" class="relogio" aria-label="Data e hora"></div>
       </div>
       <div class="cards">
-        <button id="botaoProducao" class="cartao producao" type="button" disabled>
-          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Módulo em desenvolvimento</small>
+        <button id="botaoProducao" class="cartao producao" type="button">
+          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Consulta de OP disponível</small>
         </button>
         <button id="botaoGestao" class="cartao gestao" type="button" disabled hidden>
           GESTÃO<small>Cadastros, importações e relatórios<br>Módulo em desenvolvimento</small>
@@ -66,7 +67,29 @@
       <div class="notice" id="avisoPainel" role="status">Painel inicial disponível. As operações serão ativadas nas próximas etapas.</div>
       <div class="linha-acoes"><button id="sair" type="button">Sair do sistema</button></div>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.45</footer>
+    <section id="telaProducao" hidden>
+      <h2 style="font-size:19px;margin-top:25px">PRODUÇÃO — Consulta de OP</h2>
+      <p style="text-align:left">Leia a etiqueta no formato OP|PRODUTO|SEQUENCIAL.</p>
+      <form id="formOP">
+        <label for="etiquetaOP">Etiqueta / leitor USB</label>
+        <input id="etiquetaOP" maxlength="160" placeholder="OP|PRODUTO|SEQUENCIAL" required autocomplete="off">
+        <button id="consultarOP" type="submit">Consultar estrutura</button>
+      </form>
+      <div id="avisoOP" class="notice" role="status" aria-live="polite">Aguardando leitura da etiqueta.</div>
+      <section id="resultadoOP" class="resultado" hidden>
+        <div id="dadosOP" class="dados-op"></div>
+        <p id="validacaoEstrutura"></p>
+        <div style="overflow-x:auto"><table class="tabela-componentes"><thead><tr><th>Código</th><th>Componente</th><th>Tipo</th><th>%</th></tr></thead><tbody id="componentesOP"></tbody></table></div>
+        <div class="campo-grupo">
+          <div><label for="injetoraOP">Injetora</label><select id="injetoraOP" style="width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px"></select></div>
+          <div><label for="caixasOP">Quantidade de caixas</label><input id="caixasOP" type="number" min="1" step="1" placeholder="Caixas"></div>
+        </div>
+        <label for="frascosOP">Frascos por caixa</label><input id="frascosOP" type="number" min="1" step="1" placeholder="Frascos por caixa">
+        <div class="notice">Consulta somente leitura. O registro de aplicação será habilitado na próxima etapa.</div>
+      </section>
+      <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
+    </section>
+    <footer>SPILTAG • Sistema interno • Etapa 1.46</footer>
   </main>
   <div class="waves" aria-hidden="true"></div>
   <script>
@@ -82,6 +105,7 @@
     let tokenSessao = null; // Somente na memória desta página; nunca em localStorage.
     let expiraEm = 0;
     let ocupado = false;
+    const telaProducao = document.getElementById('telaProducao');
 
     function mensagem(texto, erro) {
       aviso.textContent = texto;
@@ -105,6 +129,7 @@
       expiraEm = 0;
       senha.value = '';
       telaInicial.hidden = true;
+      telaProducao.hidden = true;
       telaLogin.hidden = false;
       document.body.classList.remove('inicio');
       mensagem(texto || 'Informe sua matrícula e senha para acessar.', false);
@@ -115,6 +140,7 @@
       document.getElementById('botaoGestao').hidden = dados.perfil !== 'GESTAO';
       telaLogin.hidden = true;
       telaInicial.hidden = false;
+      telaProducao.hidden = true;
       document.body.classList.add('inicio');
       atualizarRelogio();
       atualizarStatusConexao();
@@ -157,6 +183,43 @@
         entrar.textContent = 'Entrar';
       }
     });
+    document.getElementById('botaoProducao').addEventListener('click', function() {
+      if (!tokenSessao) return;
+      telaInicial.hidden = true;
+      telaProducao.hidden = false;
+      document.getElementById('etiquetaOP').focus();
+    });
+    document.getElementById('voltarInicio').addEventListener('click', function() {
+      telaProducao.hidden = true;
+      telaInicial.hidden = false;
+    });
+    document.getElementById('formOP').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const avisoOP = document.getElementById('avisoOP');
+      const botao = document.getElementById('consultarOP');
+      document.getElementById('resultadoOP').hidden = true;
+      if (!tokenSessao) { mostrarLogin('Sessão inválida. Entre novamente.'); return; }
+      botao.disabled = true;
+      avisoOP.textContent = 'Consultando estrutura...';
+      try {
+        const r = await requisicao({acao:'consultarOP146',token:tokenSessao,etiqueta:document.getElementById('etiquetaOP').value});
+        if (!r.sucesso) { avisoOP.textContent = r.mensagem || 'Consulta não realizada.'; return; }
+        const d = document.getElementById('dadosOP'); d.replaceChildren();
+        const campos = [['OP',r.op],['Produto',r.produto],['Descrição',r.descricao],['Peso líquido',Number.isFinite(r.pesoLiquido)?String(r.pesoLiquido):'Não informado'],['Master de cor',r.masterPercentual+'%'],['Total estrutura',r.somaPercentual+'%']];
+        for (const [k,v] of campos) { const el=document.createElement('span');el.textContent=k+': '+v;d.appendChild(el); }
+        const avisoEstrutura=document.getElementById('validacaoEstrutura');
+        avisoEstrutura.textContent=r.estruturaValida?'Estrutura validada (100% e componentes classificados).':'Atenção: estrutura incompleta, não totaliza 100% ou possui componentes sem classificação.';
+        avisoEstrutura.className=r.estruturaValida?'':'alerta-estrutura';
+        const tbody=document.getElementById('componentesOP');tbody.replaceChildren();
+        for(const c of r.componentes){const tr=document.createElement('tr');for(const v of [c.codigo,c.descricao,c.tipo+(c.classificacao?' ('+c.classificacao+')':''),c.percentual===null?'Inválido':c.percentual+'%']){const td=document.createElement('td');td.textContent=String(v);tr.appendChild(td);}tbody.appendChild(tr);}
+        const select=document.getElementById('injetoraOP');select.replaceChildren();
+        const vazio=document.createElement('option');vazio.value='';vazio.textContent='Selecione a injetora';select.appendChild(vazio);
+        for(const inj of r.injetoras){const o=document.createElement('option');o.value=inj.id;o.textContent=inj.nome;select.appendChild(o);}
+        document.getElementById('resultadoOP').hidden=false;
+        avisoOP.textContent='Consulta concluída. Nenhum dado foi gravado.';
+      } catch(_) { avisoOP.textContent='Falha na comunicação com o servidor.'; }
+      finally {botao.disabled=false;}
+    });
     document.getElementById('sair').addEventListener('click', async function() {
       const token = tokenSessao;
       mostrarLogin('Sessão encerrada neste navegador.');
@@ -176,7 +239,7 @@
       document.getElementById('statusConexao').textContent = online ? 'Navegador conectado' : 'Sem conexão de rede';
     }
     setInterval(function() {
-      if (!telaInicial.hidden) {
+      if (!telaInicial.hidden || !telaProducao.hidden) {
         atualizarRelogio();
         if (tokenSessao && expiraEm && Date.now() >= expiraEm) mostrarLogin('Sua sessão expirou. Entre novamente.');
       }
