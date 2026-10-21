@@ -198,7 +198,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.53</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.54</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -208,6 +208,17 @@
   <div id="modalResultado151" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloResultado151">
     <div class="modal-caixa"><h2 id="tituloResultado151"></h2><p id="textoResultado151"></p>
       <div class="modal-botoes"><button id="okResultado151" type="button">OK</button></div>
+    </div>
+  </div>
+  <div id="modalEnvio154" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloEnvio154">
+    <div class="modal-caixa">
+      <h2 id="tituloEnvio154">Confirmação da Cadeia de Ajuda</h2>
+      <p id="textoEnvio154">O e-mail foi preparado. Confirme somente depois de enviá-lo pelo Outlook.</p>
+      <div class="modal-botoes">
+        <button id="naoEnvio154" class="secundario" type="button">Ainda não enviei</button>
+        <button id="simEnvio154" type="button">Sim, enviei</button>
+      </div>
+      <p id="avisoEnvio154" class="notice" role="status" aria-live="polite"></p>
     </div>
   </div>
   <div class="waves" aria-hidden="true"></div>
@@ -365,17 +376,71 @@
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
       finally{trabalhandoNC152=false;btn.disabled=false;}
     });
-    document.getElementById('abrirEmail152').addEventListener('click',function(){
+    let idEmailPreparado154=null;
+    let confirmandoEnvio154=false;
+    function limparOcorrencia154() {
+      document.getElementById('etiquetaOP').value='';
+      document.getElementById('resultadoOP').hidden=true;
+      document.getElementById('avisoOP').textContent='Aguardando leitura da próxima etiqueta.';
+      document.getElementById('injetoraOP').value='';
+      document.getElementById('caixasOP').value='';
+      document.getElementById('frascosOP').value='';
+      resetAplicacao150();
+      document.getElementById('painelNC152').hidden=true;
+      document.getElementById('responsavelRecalibragem152').value='';
+      document.getElementById('responsavelContraprova152').value='';
+      document.getElementById('novaContraprova152').value='';
+      idOcorrencia152=null;
+      estadoOcorrencia152=null;
+      document.getElementById('etiquetaOP').focus();
+      carregarPendentes153();
+    }
+    document.getElementById('abrirEmail152').addEventListener('click',async function(){
       if(!estadoOcorrencia152||estadoOcorrencia152.status!=='NC_CADEIA_AJUDA')return;
-      const o=estadoOcorrencia152;
-      const assunto='Cadeia de Ajuda | OP '+o.op+' | Master não conforme';
-      const corpo='Não conformidade persistente após recalibragem.\n'+
-        'OP: '+o.op+'\nProduto: '+o.produto+'\nDosador: '+o.dosador+
-        '\nMaster real aplicado: '+o.masterReal+'%\nResponsável: '+o.responsavel+
-        '\nID da aplicação: '+o.idAplicacao+
-        '\nContraprovas: '+o.contraprovas.map(c=>c.valor+'% ('+c.status+')').join('; ')+
-        '\n\nFavor avaliar e orientar as ações necessárias.';
-      window.location.href='mailto:?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo);
+      const btn=this;
+      btn.disabled=true;
+      document.getElementById('statusNC152').textContent='Preparando o e-mail completo...';
+      try{
+        const r=await requisicao({acao:'prepararEmailCadeia154',token:tokenSessao,
+          idAplicacao:estadoOcorrencia152.idAplicacao});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao preparar e-mail.');
+        // mailto usa o cliente padrão; o operador continua responsável pelo envio.
+        idEmailPreparado154=r.idAplicacao;
+        document.getElementById('textoEnvio154').textContent=
+          'O e-mail foi preparado para o aplicativo de e-mail. Envie no Outlook e depois confirme aqui. '+
+          'Não confirme se apenas abriu o rascunho.';
+        document.getElementById('avisoEnvio154').textContent='';
+        document.getElementById('modalEnvio154').hidden=false;
+        const link='mailto:?subject='+encodeURIComponent(r.assunto)+'&body='+encodeURIComponent(r.corpo);
+        window.location.href=link;
+      }catch(e){document.getElementById('statusNC152').textContent=e.message;}
+      finally{btn.disabled=false;}
+    });
+    document.getElementById('naoEnvio154').addEventListener('click',function(){
+      document.getElementById('modalEnvio154').hidden=true;
+      document.getElementById('statusNC152').textContent=
+        'E-mail ainda não confirmado. A ocorrência permanece pendente.';
+      idEmailPreparado154=null;
+    });
+    document.getElementById('simEnvio154').addEventListener('click',async function(){
+      if(confirmandoEnvio154||!idEmailPreparado154)return;
+      confirmandoEnvio154=true;
+      const botao=this;botao.disabled=true;
+      const aviso=document.getElementById('avisoEnvio154');
+      aviso.textContent='Registrando confirmação do envio...';
+      try{
+        const r=await requisicao({acao:'confirmarEnvioCadeia154',
+          token:tokenSessao,idAplicacao:idEmailPreparado154,
+          chaveRequisicao:crypto.randomUUID(),confirmouEnvio:true});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao registrar confirmação.');
+        document.getElementById('modalEnvio154').hidden=true;
+        idEmailPreparado154=null;
+        limparOcorrencia154();
+        const m=document.getElementById('avisoOP');
+        m.textContent='Cadeia de Ajuda acionada e registrada. A ocorrência permanece não conforme até tratativa.';
+        m.className='notice ok';
+      }catch(e){aviso.textContent=e.message;}
+      finally{confirmandoEnvio154=false;botao.disabled=false;}
     });
     async function carregarDosadoresProducao151() {
       const sel=document.getElementById('dosador150');sel.replaceChildren();
