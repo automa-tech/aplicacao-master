@@ -128,13 +128,12 @@
             <div class="notice">O e-mail será preparado no aplicativo de e-mail padrão. Confira e selecione os destinatários antes de enviar.</div>
           </div>
         </section>
-      <section class="resultado">
-        <h3>Retomar não conformidade registrada</h3>
-        <p style="text-align:left">Use o ID da aplicação para continuar uma ocorrência já registrada, inclusive após atualizar a página.</p>
-        <label for="idRetomada152">ID da aplicação</label>
-        <input id="idRetomada152" placeholder="Cole o ID da ocorrência" autocomplete="off">
-        <button id="retomarNC152" type="button">Retomar ocorrência</button>
-        <div id="avisoRetomada152" class="notice" role="status"></div>
+      <section id="secaoPendentes153" class="resultado">
+        <h3>Ocorrências pendentes</h3>
+        <p style="text-align:left">Selecione uma ocorrência para continuar a tratativa, sem digitar IDs.</p>
+        <button id="atualizarPendentes153" type="button" class="voltar">Atualizar ocorrências</button>
+        <div id="avisoPendentes153" class="notice" role="status" aria-live="polite"></div>
+        <div id="listaPendentes153" style="display:grid;gap:12px;margin-top:12px"></div>
       </section>
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
@@ -199,7 +198,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.52</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.53</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -258,11 +257,17 @@
         document.getElementById('caixasOP').value='';
         document.getElementById('frascosOP').value='';
         resetAplicacao150();
+        document.getElementById('painelNC152').hidden=true;
+        document.getElementById('responsavelRecalibragem152').value='';
+        document.getElementById('responsavelContraprova152').value='';
+        document.getElementById('novaContraprova152').value='';
+        idOcorrencia152=null;estadoOcorrencia152=null;
         document.getElementById('etiquetaOP').focus();
+        carregarPendentes153();
       } else if (resultadoPendente151 && resultadoPendente151.status==='NC_RECALIBRAGEM') {
         idOcorrencia152 = resultadoPendente151.idAplicacao;
-        document.getElementById('idRetomada152').value=idOcorrencia152;
         abrirPainelNC152('NC_RECALIBRAGEM');
+        carregarPendentes153();
       }
       if(resultadoPendente151 && resultadoPendente151.status==='NC_CADEIA_AJUDA') {
         abrirPainelNC152('NC_CADEIA_AJUDA');
@@ -290,20 +295,45 @@
       const r=await requisicao({acao:'consultarOcorrencia152',token:tokenSessao,idAplicacao:id});
       if(!r.sucesso)throw new Error(r.mensagem||'Não foi possível consultar a ocorrência.');
       idOcorrencia152=id;estadoOcorrencia152=r;
-      document.getElementById('idRetomada152').value=id;
       abrirPainelNC152(r.status);
       return r;
     }
-    document.getElementById('retomarNC152').addEventListener('click',async function() {
-      const aviso=document.getElementById('avisoRetomada152');
-      const id=document.getElementById('idRetomada152').value.trim();
-      if(!/^[a-f0-9-]{36}$/i.test(id)){aviso.textContent='Informe um ID válido.';return;}
-      aviso.textContent='Consultando ocorrência...';
-      try{
-        const r=await consultarEstado152(id);
-        aviso.textContent='Ocorrência localizada: OP '+r.op+' | Produto '+r.produto+' | Status '+r.status;
+    async function carregarPendentes153() {
+      const aviso=document.getElementById('avisoPendentes153');
+      const lista=document.getElementById('listaPendentes153');
+      aviso.textContent='Consultando ocorrências...';
+      lista.replaceChildren();
+      try {
+        const r=await requisicao({acao:'listarOcorrenciasPendentes153',token:tokenSessao});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha na consulta.');
+        aviso.textContent=r.total===0?'Nenhuma ocorrência pendente.':
+          r.total+' ocorrência(s) pendente(s).'+(r.total>100?' Exibindo as 100 mais recentes.':'');
+        r.ocorrencias.forEach(o=>{
+          const card=document.createElement('div');
+          card.style.cssText='border:1px solid #d1d8e1;border-radius:10px;padding:14px';
+          const titulo=document.createElement('div');
+          titulo.textContent='OP '+o.op+' | Produto '+o.produto+' | '+o.status;
+          titulo.style.fontWeight='700';
+          const detalhe=document.createElement('p');
+          detalhe.style.textAlign='left';
+          detalhe.textContent='Injetora: '+o.injetora+' | Dosador: '+o.dosador+' | '+o.dataHora;
+          const botao=document.createElement('button');
+          botao.type='button';botao.textContent='Continuar ocorrência';
+          botao.addEventListener('click',async()=>{
+            botao.disabled=true;
+            try{
+              const situacao=await consultarEstado152(o.idAplicacao);
+              aviso.textContent='Ocorrência carregada: OP '+situacao.op;
+              document.getElementById('painelNC152').scrollIntoView({behavior:'smooth',block:'start'});
+            }catch(e){aviso.textContent=e.message;}
+            finally{botao.disabled=false;}
+          });
+          card.append(titulo,detalhe,botao);
+          lista.appendChild(card);
+        });
       }catch(e){aviso.textContent=e.message;}
-    });
+    }
+    document.getElementById('atualizarPendentes153').addEventListener('click',carregarPendentes153);
     document.getElementById('confirmarRecalibragem152').addEventListener('click',async function() {
       if(trabalhandoNC152||!idOcorrencia152)return;
       const responsavel=document.getElementById('responsavelRecalibragem152').value.trim();
@@ -329,6 +359,7 @@
           idAplicacao:idOcorrencia152,responsavel,contraprova,chaveRequisicao:crypto.randomUUID()});
         if(!r.sucesso)throw new Error(r.mensagem);
         await consultarEstado152(idOcorrencia152);
+        carregarPendentes153();
         avisoResultado151({status:r.status==='CONFORME'?'CONFORME':'NC_CADEIA_AJUDA',
           idAplicacao:idOcorrencia152,limiteMinimo:r.limiteMinimo,limiteMaximo:r.limiteMaximo});
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
@@ -548,6 +579,7 @@
       if (!tokenSessao) return;
       telaInicial.hidden = true;
       telaProducao.hidden = false;
+      carregarPendentes153();
       document.getElementById('etiquetaOP').focus();
     });
     document.getElementById('botaoGestao').addEventListener('click', function() {
