@@ -67,7 +67,7 @@
       </div>
       <div class="cards">
         <button id="botaoProducao" class="cartao producao" type="button">
-          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Consulta de OP disponível</small>
+          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Registro inicial de aplicação</small>
         </button>
         <button id="botaoGestao" class="cartao gestao" type="button" hidden>
           GESTÃO<small>Importação da estrutura Protheus disponível<br>Outros módulos em desenvolvimento</small>
@@ -94,7 +94,18 @@
           <div><label for="caixasOP">Quantidade de caixas</label><input id="caixasOP" type="number" min="1" step="1" placeholder="Caixas"></div>
         </div>
         <label for="frascosOP">Frascos por caixa</label><input id="frascosOP" type="number" min="1" step="1" placeholder="Frascos por caixa">
-        <div class="notice">Consulta somente leitura. O registro de aplicação será habilitado na próxima etapa.</div>
+        <form id="formAplicacao150" autocomplete="off">
+          <h3>Registro de aplicação e contraprova inicial</h3>
+          <div class="campo-grupo">
+            <div><label for="dosador150">Dosador</label><input id="dosador150" required maxlength="80" placeholder="Identificação do dosador"></div>
+            <div><label for="responsavel150">Responsável</label><input id="responsavel150" required maxlength="100" placeholder="Nome do responsável"></div>
+            <div><label for="real150">Master real aplicado (%)</label><input id="real150" required inputmode="decimal" placeholder="Ex.: 3,50"></div>
+            <div><label for="contra150">Contraprova inicial (%)</label><input id="contra150" required inputmode="decimal" placeholder="Ex.: 3,45"></div>
+          </div>
+          <div id="previa150" class="notice">Informe o percentual real e a contraprova para visualizar a faixa de tolerância relativa de ±5% (valor configurado no servidor).</div>
+          <button id="salvarAplicacao150" type="submit">Registrar aplicação</button>
+          <div id="avisoAplicacao150" class="notice" role="status" aria-live="polite">Nenhuma aplicação registrada nesta consulta.</div>
+        </form>
       </section>
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
@@ -144,7 +155,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.49</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.50</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -170,6 +181,79 @@
     let perfilSessao = '';
     let linhasImportacao = null;
     let nomeArquivoImportacao = '';
+    let consultaAtual150 = null;
+    let chaveAtual150 = null;
+    let gravando150 = false;
+    const gerarChave150 = () => crypto.randomUUID();
+    function resetAplicacao150() {
+      consultaAtual150 = null;
+      chaveAtual150 = null;
+      document.getElementById('formAplicacao150').reset();
+      document.getElementById('salvarAplicacao150').disabled = false;
+      document.getElementById('avisoAplicacao150').textContent = 'Nenhuma aplicação registrada nesta consulta.';
+      document.getElementById('previa150').textContent = 'Informe o percentual real e a contraprova. A validação definitiva será feita no servidor.';
+    }
+    function numero150(valor) {
+      const t = String(valor).trim().replace(',', '.');
+      return /^\\d+(?:\\.\\d{1,4})?$/.test(t) ? Number(t) : NaN;
+    }
+    function atualizarPrevia150() {
+      const real = numero150(document.getElementById('real150').value);
+      const contra = numero150(document.getElementById('contra150').value);
+      const campo = document.getElementById('previa150');
+      if (!Number.isFinite(real) || real <= 0 || !Number.isFinite(contra)) {
+        campo.textContent = 'Preencha os percentuais para conferir a tolerância. A validação definitiva será feita no servidor.';
+        return;
+      }
+      const minimo = real * .95, maximo = real * 1.05;
+      const formato = n => n.toLocaleString('pt-BR',{maximumFractionDigits:4});
+      campo.textContent = 'Prévia (tolerância padrão de ±5%): de '+formato(minimo)+'% a '+formato(maximo)+'%. Contraprova '+(contra>=minimo-1e-10 && contra<=maximo+1e-10?'dentro':'fora')+' da faixa. O servidor aplica a configuração vigente.';
+    }
+    ['real150','contra150'].forEach(id=>document.getElementById(id).addEventListener('input',atualizarPrevia150));
+    document.getElementById('formAplicacao150').addEventListener('submit',async function(e) {
+      e.preventDefault();
+      const aviso = document.getElementById('avisoAplicacao150');
+      const botao = document.getElementById('salvarAplicacao150');
+      if (gravando150) return;
+      if (!tokenSessao || !consultaAtual150 || !consultaAtual150.estruturaValida || !chaveAtual150) {
+        aviso.textContent = 'Consulte uma OP com estrutura válida antes de registrar.';
+        return;
+      }
+      const injetoraId = document.getElementById('injetoraOP').value;
+      const caixas = document.getElementById('caixasOP').value;
+      const frascos = document.getElementById('frascosOP').value;
+      const dosador = document.getElementById('dosador150').value.trim();
+      const responsavel = document.getElementById('responsavel150').value.trim();
+      const masterReal = document.getElementById('real150').value.trim();
+      const contraprova = document.getElementById('contra150').value.trim();
+      if (!injetoraId || !caixas || !frascos || !dosador || !responsavel || !masterReal || !contraprova) {
+        aviso.textContent = 'Preencha todos os campos, inclusive injetora, caixas e frascos por caixa.';
+        return;
+      }
+      gravando150 = true; botao.disabled = true;
+      aviso.textContent = 'Registrando aplicação e contraprova...';
+      try {
+        const r = await requisicao({acao:'registrarAplicacao150',token:tokenSessao,
+          etiqueta:document.getElementById('etiquetaOP').value,
+          injetoraId,caixas,frascos,dosador,responsavel,masterReal,contraprova,
+          chaveRequisicao:chaveAtual150});
+        aviso.textContent = r.mensagem || (r.sucesso?'Registro concluído.':'Registro não realizado.');
+        aviso.className = r.sucesso && r.status==='CONFORME' ? 'notice ok' :
+          r.sucesso ? 'notice error' : 'notice error';
+        if (r.sucesso) {
+          consultaAtual150 = null;
+          chaveAtual150 = null;
+          botao.disabled = true;
+          document.getElementById('previa150').textContent =
+            'Status: '+r.status+' | Faixa validada: '+r.limiteMinimo+'% a '+r.limiteMaximo+'%. ID: '+r.idAplicacao;
+        } else {
+          botao.disabled = false;
+        }
+      } catch(_) {
+        aviso.textContent = 'Resposta não confirmada. Confira as abas APLICACOES e CONTRAPROVAS antes de reenviar.';
+        botao.disabled = true; // Evita duplicação em falha de rede.
+      } finally { gravando150 = false; }
+    });
 
     function mensagem(texto, erro) {
       aviso.textContent = texto;
@@ -430,11 +514,17 @@
       telaProducao.hidden = true;
       telaInicial.hidden = false;
     });
+    document.getElementById('etiquetaOP').addEventListener('input', function() {
+      consultaAtual150 = null;
+      chaveAtual150 = null;
+      document.getElementById('resultadoOP').hidden = true;
+    });
     document.getElementById('formOP').addEventListener('submit', async function(e) {
       e.preventDefault();
       const avisoOP = document.getElementById('avisoOP');
       const botao = document.getElementById('consultarOP');
       document.getElementById('resultadoOP').hidden = true;
+      resetAplicacao150();
       if (!tokenSessao) { mostrarLogin('Sessão inválida. Entre novamente.'); return; }
       botao.disabled = true;
       avisoOP.textContent = 'Consultando estrutura...';
@@ -452,6 +542,11 @@
         const select=document.getElementById('injetoraOP');select.replaceChildren();
         const vazio=document.createElement('option');vazio.value='';vazio.textContent='Selecione a injetora';select.appendChild(vazio);
         for(const inj of r.injetoras){const o=document.createElement('option');o.value=inj.id;o.textContent=inj.nome;select.appendChild(o);}
+        consultaAtual150 = r;
+        chaveAtual150 = gerarChave150();
+        document.getElementById('salvarAplicacao150').disabled = !r.estruturaValida;
+        document.getElementById('avisoAplicacao150').textContent = r.estruturaValida ?
+          'Preencha os campos para registrar.' : 'Estrutura inválida: registro bloqueado.';
         document.getElementById('resultadoOP').hidden=false;
         avisoOP.textContent='Consulta concluída. Nenhum dado foi gravado.';
       } catch(_) { avisoOP.textContent='Falha na comunicação com o servidor.'; }
