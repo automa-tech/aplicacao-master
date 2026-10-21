@@ -107,6 +107,35 @@
           <div id="avisoAplicacao150" class="notice" role="status" aria-live="polite">Nenhuma aplicação registrada nesta consulta.</div>
         </form>
       </section>
+        <section id="painelNC152" class="resultado" hidden>
+          <h3>Tratamento de não conformidade</h3>
+          <div id="statusNC152" class="notice" role="status" aria-live="polite"></div>
+          <div id="blocoRecalibragem152">
+            <label for="responsavelRecalibragem152">Responsável pela recalibragem</label>
+            <input id="responsavelRecalibragem152" maxlength="100" autocomplete="off" placeholder="Informe quem recalibrou o dosador">
+            <button id="confirmarRecalibragem152" type="button">Confirmar recalibragem do dosador</button>
+          </div>
+          <div id="blocoContraprova152" hidden>
+            <label for="responsavelContraprova152">Responsável pela nova contraprova</label>
+            <input id="responsavelContraprova152" maxlength="100" autocomplete="off" placeholder="Informe o responsável">
+            <label for="novaContraprova152">Nova contraprova (%)</label>
+            <input id="novaContraprova152" inputmode="decimal" autocomplete="off" placeholder="Ex.: 3,45">
+            <button id="validarContraprova152" type="button">Validar nova contraprova</button>
+          </div>
+          <div id="blocoCadeia152" hidden>
+            <p>Não conformidade persistente. Acione a Cadeia de Ajuda.</p>
+            <button id="abrirEmail152" type="button">Preparar e-mail da Cadeia de Ajuda</button>
+            <div class="notice">O e-mail será preparado no aplicativo de e-mail padrão. Confira e selecione os destinatários antes de enviar.</div>
+          </div>
+        </section>
+      <section class="resultado">
+        <h3>Retomar não conformidade registrada</h3>
+        <p style="text-align:left">Use o ID da aplicação para continuar uma ocorrência já registrada, inclusive após atualizar a página.</p>
+        <label for="idRetomada152">ID da aplicação</label>
+        <input id="idRetomada152" placeholder="Cole o ID da ocorrência" autocomplete="off">
+        <button id="retomarNC152" type="button">Retomar ocorrência</button>
+        <div id="avisoRetomada152" class="notice" role="status"></div>
+      </section>
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
     <section id="telaGestao" hidden>
@@ -170,7 +199,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.51</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.52</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -205,6 +234,9 @@
     let chaveAtual150 = null;
     let gravando150 = false;
     let resultadoPendente151 = null;
+    let idOcorrencia152 = null;
+    let estadoOcorrencia152 = null;
+    let trabalhandoNC152 = false;
     function avisoResultado151(r) {
       resultadoPendente151 = r;
       const modal=document.getElementById('modalResultado151');
@@ -227,12 +259,92 @@
         document.getElementById('frascosOP').value='';
         resetAplicacao150();
         document.getElementById('etiquetaOP').focus();
-      } else {
-        document.getElementById('avisoAplicacao150').textContent =
-          'Não conformidade registrada. Recalibragem e nova contraprova serão habilitadas na próxima etapa. Não registre outra aplicação para a mesma ocorrência.';
-        document.getElementById('avisoAplicacao150').className='notice error';
+      } else if (resultadoPendente151 && resultadoPendente151.status==='NC_RECALIBRAGEM') {
+        idOcorrencia152 = resultadoPendente151.idAplicacao;
+        document.getElementById('idRetomada152').value=idOcorrencia152;
+        abrirPainelNC152('NC_RECALIBRAGEM');
+      }
+      if(resultadoPendente151 && resultadoPendente151.status==='NC_CADEIA_AJUDA') {
+        abrirPainelNC152('NC_CADEIA_AJUDA');
       }
       resultadoPendente151=null;
+    });
+    function abrirPainelNC152(status) {
+      const painel=document.getElementById('painelNC152');
+      painel.hidden=false;
+      document.getElementById('blocoRecalibragem152').hidden=status!=='NC_RECALIBRAGEM';
+      document.getElementById('blocoContraprova152').hidden=status!=='NC_RECALIBRADA';
+      document.getElementById('blocoCadeia152').hidden=status!=='NC_CADEIA_AJUDA';
+      const textos={
+        NC_RECALIBRAGEM:'Recalibragem obrigatória antes da segunda contraprova.',
+        NC_RECALIBRADA:'Recalibragem confirmada. Informe a segunda contraprova.',
+        NC_CADEIA_AJUDA:'Segunda contraprova não conforme. Acione a Cadeia de Ajuda.',
+        CONFORME:'Ocorrência encerrada: CONFORME.'
+      };
+      document.getElementById('statusNC152').textContent=textos[status]||'Situação da ocorrência: '+status;
+      document.getElementById('statusNC152').className=
+        status==='CONFORME'?'notice ok':'notice error';
+      document.getElementById('salvarAplicacao150').disabled=true;
+    }
+    async function consultarEstado152(id) {
+      const r=await requisicao({acao:'consultarOcorrencia152',token:tokenSessao,idAplicacao:id});
+      if(!r.sucesso)throw new Error(r.mensagem||'Não foi possível consultar a ocorrência.');
+      idOcorrencia152=id;estadoOcorrencia152=r;
+      document.getElementById('idRetomada152').value=id;
+      abrirPainelNC152(r.status);
+      return r;
+    }
+    document.getElementById('retomarNC152').addEventListener('click',async function() {
+      const aviso=document.getElementById('avisoRetomada152');
+      const id=document.getElementById('idRetomada152').value.trim();
+      if(!/^[a-f0-9-]{36}$/i.test(id)){aviso.textContent='Informe um ID válido.';return;}
+      aviso.textContent='Consultando ocorrência...';
+      try{
+        const r=await consultarEstado152(id);
+        aviso.textContent='Ocorrência localizada: OP '+r.op+' | Produto '+r.produto+' | Status '+r.status;
+      }catch(e){aviso.textContent=e.message;}
+    });
+    document.getElementById('confirmarRecalibragem152').addEventListener('click',async function() {
+      if(trabalhandoNC152||!idOcorrencia152)return;
+      const responsavel=document.getElementById('responsavelRecalibragem152').value.trim();
+      if(!responsavel){document.getElementById('statusNC152').textContent='Informe o responsável pela recalibragem.';return;}
+      trabalhandoNC152=true;
+      const btn=this;btn.disabled=true;
+      try{
+        const r=await requisicao({acao:'registrarRecalibragem152',token:tokenSessao,
+          idAplicacao:idOcorrencia152,responsavel,chaveRequisicao:crypto.randomUUID()});
+        if(!r.sucesso)throw new Error(r.mensagem);
+        await consultarEstado152(idOcorrencia152);
+      }catch(e){document.getElementById('statusNC152').textContent=e.message;}
+      finally{trabalhandoNC152=false;btn.disabled=false;}
+    });
+    document.getElementById('validarContraprova152').addEventListener('click',async function() {
+      if(trabalhandoNC152||!idOcorrencia152)return;
+      const responsavel=document.getElementById('responsavelContraprova152').value.trim();
+      const contraprova=document.getElementById('novaContraprova152').value.trim();
+      if(!responsavel||!contraprova){document.getElementById('statusNC152').textContent='Preencha responsável e nova contraprova.';return;}
+      trabalhandoNC152=true;const btn=this;btn.disabled=true;
+      try{
+        const r=await requisicao({acao:'registrarSegundaContraprova152',token:tokenSessao,
+          idAplicacao:idOcorrencia152,responsavel,contraprova,chaveRequisicao:crypto.randomUUID()});
+        if(!r.sucesso)throw new Error(r.mensagem);
+        await consultarEstado152(idOcorrencia152);
+        avisoResultado151({status:r.status==='CONFORME'?'CONFORME':'NC_CADEIA_AJUDA',
+          idAplicacao:idOcorrencia152,limiteMinimo:r.limiteMinimo,limiteMaximo:r.limiteMaximo});
+      }catch(e){document.getElementById('statusNC152').textContent=e.message;}
+      finally{trabalhandoNC152=false;btn.disabled=false;}
+    });
+    document.getElementById('abrirEmail152').addEventListener('click',function(){
+      if(!estadoOcorrencia152||estadoOcorrencia152.status!=='NC_CADEIA_AJUDA')return;
+      const o=estadoOcorrencia152;
+      const assunto='Cadeia de Ajuda | OP '+o.op+' | Master não conforme';
+      const corpo='Não conformidade persistente após recalibragem.\n'+
+        'OP: '+o.op+'\nProduto: '+o.produto+'\nDosador: '+o.dosador+
+        '\nMaster real aplicado: '+o.masterReal+'%\nResponsável: '+o.responsavel+
+        '\nID da aplicação: '+o.idAplicacao+
+        '\nContraprovas: '+o.contraprovas.map(c=>c.valor+'% ('+c.status+')').join('; ')+
+        '\n\nFavor avaliar e orientar as ações necessárias.';
+      window.location.href='mailto:?subject='+encodeURIComponent(assunto)+'&body='+encodeURIComponent(corpo);
     });
     async function carregarDosadoresProducao151() {
       const sel=document.getElementById('dosador150');sel.replaceChildren();
