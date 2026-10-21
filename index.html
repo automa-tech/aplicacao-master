@@ -37,7 +37,7 @@
     .modal-caixa h2{margin:0 0 12px;font-size:20px}.modal-caixa p{text-align:left}
     .modal-botoes{display:flex;gap:12px}.modal-botoes button{flex:1}
     .abas-gestao{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.abas-gestao button{width:auto;margin:0;padding:12px 16px;background:#e9edf2;color:#263449}.abas-gestao button.ativo{background:#245d98;color:white}
-    .grade-aditivo{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grade-aditivo label{margin-top:10px}.grade-aditivo select{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px}
+    #dosador150{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px;background:#fff} .grade-aditivo{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grade-aditivo label{margin-top:10px}.grade-aditivo select{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
 </head>
@@ -97,7 +97,7 @@
         <form id="formAplicacao150" autocomplete="off">
           <h3>Registro de aplicação e contraprova inicial</h3>
           <div class="campo-grupo">
-            <div><label for="dosador150">Dosador</label><input id="dosador150" required maxlength="80" placeholder="Identificação do dosador"></div>
+            <div><label for="dosador150">Dosador</label><select id="dosador150" required><option value="">Selecione o dosador</option></select></div>
             <div><label for="responsavel150">Responsável</label><input id="responsavel150" required maxlength="100" placeholder="Nome do responsável"></div>
             <div><label for="real150">Master real aplicado (%)</label><input id="real150" required inputmode="decimal" placeholder="Ex.: 3,50"></div>
             <div><label for="contra150">Contraprova inicial (%)</label><input id="contra150" required inputmode="decimal" placeholder="Ex.: 3,45"></div>
@@ -111,7 +111,7 @@
     </section>
     <section id="telaGestao" hidden>
       <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button></div>
+      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button></div>
       <div id="painelImportacao">
       <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
@@ -153,13 +153,33 @@
         <div id="avisoInjetoras" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar uma injetora.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Injetora</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaInjetoras"></tbody></table></div>
       </div>
+      <div id="painelDosadores" hidden>
+        <h3>Cadastro de dosadores</h3>
+        <p style="text-align:left">Cadastre os dosadores. Apenas equipamentos ativos poderão ser selecionados na Produção.</p>
+        <form id="formDosador151" autocomplete="off">
+          <input id="idDosador151" type="hidden" value="">
+          <div class="grade-aditivo">
+            <div><label for="nomeDosador151">Nome do dosador</label><input id="nomeDosador151" required maxlength="80" autocomplete="off" placeholder="Digite o nome do dosador"></div>
+            <div><label for="ativoDosador151">Situação</label><select id="ativoDosador151" required><option value="" selected disabled>Selecione a situação</option><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div>
+          </div>
+          <button id="salvarDosador151" type="submit">Salvar dosador</button>
+          <button id="limparDosador151" type="button" class="secundario">Limpar campos</button>
+        </form>
+        <div id="avisoDosador151" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar.</div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Dosador</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDosadores151"></tbody></table></div>
+      </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.50</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.51</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
       <div class="modal-botoes"><button id="cancelarModal" class="secundario" type="button">Cancelar</button><button id="aceitarModal" type="button">Confirmar</button></div>
+    </div>
+  </div>
+  <div id="modalResultado151" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloResultado151">
+    <div class="modal-caixa"><h2 id="tituloResultado151"></h2><p id="textoResultado151"></p>
+      <div class="modal-botoes"><button id="okResultado151" type="button">OK</button></div>
     </div>
   </div>
   <div class="waves" aria-hidden="true"></div>
@@ -184,6 +204,80 @@
     let consultaAtual150 = null;
     let chaveAtual150 = null;
     let gravando150 = false;
+    let resultadoPendente151 = null;
+    function avisoResultado151(r) {
+      resultadoPendente151 = r;
+      const modal=document.getElementById('modalResultado151');
+      const titulo=document.getElementById('tituloResultado151');
+      titulo.textContent = r.status==='CONFORME'?'✓ Aplicação conforme':'⚠ Aplicação não conforme';
+      titulo.style.color = r.status==='CONFORME'?'#237d48':'#b9232e';
+      document.getElementById('textoResultado151').textContent =
+        (r.status==='CONFORME'?'Registro realizado com sucesso.':'Recalibragem obrigatória. Os dados serão mantidos para a tratativa.') +
+        ' Faixa validada: '+r.limiteMinimo+'% a '+r.limiteMaximo+'%. ID: '+r.idAplicacao;
+      modal.hidden=false;document.getElementById('okResultado151').focus();
+    }
+    document.getElementById('okResultado151').addEventListener('click',function(){
+      document.getElementById('modalResultado151').hidden=true;
+      if(resultadoPendente151 && resultadoPendente151.status==='CONFORME') {
+        document.getElementById('etiquetaOP').value='';
+        document.getElementById('resultadoOP').hidden=true;
+        document.getElementById('avisoOP').textContent='Aguardando leitura da próxima etiqueta.';
+        document.getElementById('injetoraOP').value='';
+        document.getElementById('caixasOP').value='';
+        document.getElementById('frascosOP').value='';
+        resetAplicacao150();
+        document.getElementById('etiquetaOP').focus();
+      } else {
+        document.getElementById('avisoAplicacao150').textContent =
+          'Não conformidade registrada. Recalibragem e nova contraprova serão habilitadas na próxima etapa. Não registre outra aplicação para a mesma ocorrência.';
+        document.getElementById('avisoAplicacao150').className='notice error';
+      }
+      resultadoPendente151=null;
+    });
+    async function carregarDosadoresProducao151() {
+      const sel=document.getElementById('dosador150');sel.replaceChildren();
+      const vazio=document.createElement('option');vazio.value='';vazio.textContent='Selecione o dosador';sel.appendChild(vazio);
+      const r=await requisicao({acao:'listarDosadores151',token:tokenSessao});
+      if(!r.sucesso) throw new Error('Não foi possível consultar os dosadores.');
+      for(const d of r.dosadores){const o=document.createElement('option');o.value=d.id;o.textContent=d.nome;sel.appendChild(o);}
+      sel.value='';
+    }
+    function limparDosador151() {
+      document.getElementById('formDosador151').reset();
+      document.getElementById('idDosador151').value='';
+      document.getElementById('ativoDosador151').value='';
+    }
+    document.getElementById('limparDosador151').addEventListener('click',limparDosador151);
+    async function carregarDosadores151(){
+      const aviso=document.getElementById('avisoDosador151');aviso.textContent='Consultando dosadores...';
+      try {
+        const r=await requisicao({acao:'listarDosadores151',token:tokenSessao});
+        if(!r.sucesso){aviso.textContent=r.mensagem||'Consulta não realizada.';return;}
+        const tbody=document.getElementById('listaDosadores151');tbody.replaceChildren();
+        for(const d of r.dosadores){
+          const tr=document.createElement('tr');
+          for(const v of [d.nome,d.ativo?'Ativo':'Inativo']){const td=document.createElement('td');td.textContent=v;tr.appendChild(td);}
+          const td=document.createElement('td'),btn=document.createElement('button');
+          btn.type='button';btn.textContent='Editar';btn.className='secundario';btn.style.cssText='width:auto;margin:0;padding:8px 12px';
+          btn.addEventListener('click',()=>{document.getElementById('idDosador151').value=d.id;document.getElementById('nomeDosador151').value=d.nome;document.getElementById('ativoDosador151').value=d.ativo?'SIM':'NAO';aviso.textContent='Editando '+d.nome+'.';});
+          td.appendChild(btn);tr.appendChild(td);tbody.appendChild(tr);
+        }
+        aviso.textContent=r.dosadores.length+' dosador(es) cadastrado(s).';
+      }catch(_){aviso.textContent='Falha na comunicação com o servidor.';}
+    }
+    document.getElementById('formDosador151').addEventListener('submit',async function(e){
+      e.preventDefault();const btn=document.getElementById('salvarDosador151'),aviso=document.getElementById('avisoDosador151');
+      const situacao=document.getElementById('ativoDosador151').value;
+      if(!situacao){aviso.textContent='Selecione a situação.';return;}
+      btn.disabled=true;aviso.textContent='Salvando dosador...';
+      try{
+        const r=await requisicao({acao:'salvarDosador151',token:tokenSessao,
+          id:document.getElementById('idDosador151').value,
+          nome:document.getElementById('nomeDosador151').value,ativo:situacao==='SIM'});
+        if(!r.sucesso){aviso.textContent=r.mensagem||'Não foi possível salvar.';return;}
+        limparDosador151();await carregarDosadores151();aviso.textContent='Dosador salvo com sucesso.';
+      }catch(_){aviso.textContent='Falha de comunicação ao salvar.';}finally{btn.disabled=false;}
+    });
     const gerarChave150 = () => crypto.randomUUID();
     function resetAplicacao150() {
       consultaAtual150 = null;
@@ -222,11 +316,11 @@
       const injetoraId = document.getElementById('injetoraOP').value;
       const caixas = document.getElementById('caixasOP').value;
       const frascos = document.getElementById('frascosOP').value;
-      const dosador = document.getElementById('dosador150').value.trim();
+      const dosadorId = document.getElementById('dosador150').value.trim();
       const responsavel = document.getElementById('responsavel150').value.trim();
       const masterReal = document.getElementById('real150').value.trim();
       const contraprova = document.getElementById('contra150').value.trim();
-      if (!injetoraId || !caixas || !frascos || !dosador || !responsavel || !masterReal || !contraprova) {
+      if (!injetoraId || !caixas || !frascos || !dosadorId || !responsavel || !masterReal || !contraprova) {
         aviso.textContent = 'Preencha todos os campos, inclusive injetora, caixas e frascos por caixa.';
         return;
       }
@@ -235,7 +329,7 @@
       try {
         const r = await requisicao({acao:'registrarAplicacao150',token:tokenSessao,
           etiqueta:document.getElementById('etiquetaOP').value,
-          injetoraId,caixas,frascos,dosador,responsavel,masterReal,contraprova,
+          injetoraId,caixas,frascos,dosadorId,responsavel,masterReal,contraprova,
           chaveRequisicao:chaveAtual150});
         aviso.textContent = r.mensagem || (r.sucesso?'Registro concluído.':'Registro não realizado.');
         aviso.className = r.sucesso && r.status==='CONFORME' ? 'notice ok' :
@@ -244,8 +338,8 @@
           consultaAtual150 = null;
           chaveAtual150 = null;
           botao.disabled = true;
-          document.getElementById('previa150').textContent =
-            'Status: '+r.status+' | Faixa validada: '+r.limiteMinimo+'% a '+r.limiteMaximo+'%. ID: '+r.idAplicacao;
+          document.getElementById('previa150').textContent = 'Registro concluído.';
+          avisoResultado151(r);
         } else {
           botao.disabled = false;
         }
@@ -411,15 +505,19 @@
       document.getElementById('painelImportacao').hidden=aba!=='importacao';
       document.getElementById('painelAditivos').hidden=aba!=='aditivos';
       document.getElementById('painelInjetoras').hidden=aba!=='injetoras';
+      document.getElementById('painelDosadores').hidden=aba!=='dosadores';
       document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
       document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
       document.getElementById('abaInjetoras').classList.toggle('ativo',aba==='injetoras');
+      document.getElementById('abaDosadores').classList.toggle('ativo',aba==='dosadores');
       if(aba==='aditivos') carregarAditivos148();
       if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
+      if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
     }
     document.getElementById('abaImportacao').addEventListener('click',()=>alternarGestao148('importacao'));
     document.getElementById('abaAditivos').addEventListener('click',()=>alternarGestao148('aditivos'));
     document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
+    document.getElementById('abaDosadores').addEventListener('click',()=>alternarGestao148('dosadores'));
     function limparFormularioInjetora149() {
       document.getElementById('formInjetora').reset();
       document.getElementById('idInjetoraEdicao').value='';
@@ -548,6 +646,7 @@
         document.getElementById('avisoAplicacao150').textContent = r.estruturaValida ?
           'Preencha os campos para registrar.' : 'Estrutura inválida: registro bloqueado.';
         document.getElementById('resultadoOP').hidden=false;
+        try {await carregarDosadoresProducao151();} catch(_) {document.getElementById('avisoAplicacao150').textContent='Não foi possível carregar os dosadores.';document.getElementById('salvarAplicacao150').disabled=true;}
         avisoOP.textContent='Consulta concluída. Nenhum dado foi gravado.';
       } catch(_) { avisoOP.textContent='Falha na comunicação com o servidor.'; }
       finally {botao.disabled=false;}
