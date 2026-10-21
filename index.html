@@ -32,6 +32,12 @@
     .linha-acoes{display:flex;justify-content:flex-end}.linha-acoes button{width:auto;margin:8px 0 0;background:#eef0f3;color:#3b4755;padding:11px 25px}
     .campo-grupo{display:grid;grid-template-columns:1fr 1fr;gap:14px}.campo-grupo label{margin-top:12px}.resultado{margin-top:18px;border:1px solid #e2e6eb;border-radius:12px;padding:16px}.resultado p{text-align:left}.tabela-componentes{width:100%;border-collapse:collapse;font-size:12px}.tabela-componentes th,.tabela-componentes td{padding:8px;border-bottom:1px solid #e4e7eb;text-align:left}.tabela-componentes{overflow-wrap:anywhere}.voltar{background:#eef0f3;color:#3b4755}.alerta-estrutura{color:#a21c27;font-weight:700}.dados-op{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:14px;margin:12px 0}.dados-op span{background:#f4f5f7;padding:10px;border-radius:8px}
     @media(max-width:600px){.cards{grid-template-columns:1fr}.cartao{min-height:130px}.painel-topo{align-items:flex-start}.relogio{text-align:left}}
+    .modal-fundo{position:fixed;inset:0;background:#142033a8;z-index:10;display:flex;align-items:center;justify-content:center;padding:18px}
+    .modal-caixa{width:min(100%,440px);background:white;border-radius:16px;padding:26px;box-shadow:0 18px 60px #0004}
+    .modal-caixa h2{margin:0 0 12px;font-size:20px}.modal-caixa p{text-align:left}
+    .modal-botoes{display:flex;gap:12px}.modal-botoes button{flex:1}
+    .abas-gestao{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.abas-gestao button{width:auto;margin:0;padding:12px 16px;background:#e9edf2;color:#263449}.abas-gestao button.ativo{background:#245d98;color:white}
+    .grade-aditivo{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grade-aditivo label{margin-top:10px}.grade-aditivo select{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
 </head>
@@ -93,7 +99,10 @@
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
     <section id="telaGestao" hidden>
-      <h2 style="font-size:20px;margin-top:24px">GESTÃO — Importação de estruturas</h2>
+      <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
+      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button></div>
+      <div id="painelImportacao">
+      <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
       <label for="arquivoEstrutura">Arquivo de estrutura (.xlsx)</label>
       <input id="arquivoEstrutura" class="arquivo" type="file" accept=".xlsx">
@@ -105,10 +114,28 @@
         <p style="text-align:left;font-size:12px">Prévia das primeiras 12 linhas. Ao confirmar, os cadastros anteriores de PRODUTOS e ESTRUTURAS serão substituídos. ADITIVOS e demais abas serão preservados.</p>
         <button id="confirmarImportacao" type="button" disabled>Confirmar importação</button>
       </div>
+      </div>
+      <div id="painelAditivos" hidden>
+        <h3>Cadastro manual de aditivos</h3>
+        <p style="text-align:left">Os códigos ativos serão identificados automaticamente nas estruturas, sem alterar o percentual importado.</p>
+        <form id="formAditivo"><div class="grade-aditivo">
+          <div><label for="codigoAditivo">Código do componente</label><input id="codigoAditivo" required maxlength="20" pattern="[0-9]{1,20}" placeholder="Ex.: 0020400"></div>
+          <div><label for="classeAditivo">Classificação</label><select id="classeAditivo"><option value="BIO">BIO</option><option value="UV">UV</option><option value="OUTRO">OUTRO</option></select></div>
+          <div><label for="descricaoAditivo">Descrição</label><input id="descricaoAditivo" required maxlength="200" placeholder="Descrição do aditivo"></div>
+          <div><label for="ativoAditivo">Situação</label><select id="ativoAditivo"><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div>
+        </div><button id="salvarAditivo" type="submit">Salvar aditivo</button></form>
+        <div id="avisoAditivos" class="notice" role="status">Cadastre ou selecione um aditivo.</div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Código</th><th>Descrição</th><th>Classificação</th><th>Situação</th><th></th></tr></thead><tbody id="listaAditivos"></tbody></table></div>
+      </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.47</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.48</footer>
   </main>
+  <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
+    <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
+      <div class="modal-botoes"><button id="cancelarModal" class="secundario" type="button">Cancelar</button><button id="aceitarModal" type="button">Confirmar</button></div>
+    </div>
+  </div>
   <div class="waves" aria-hidden="true"></div>
   <script>
     'use strict';
@@ -272,15 +299,57 @@
         aviso.textContent=problemas.length?'Corrija o arquivo antes de importar.':'Arquivo lido. Nenhuma alteração gravada ainda.';
       } catch(err) {aviso.textContent='Não foi possível ler o arquivo: '+err.message;}
     });
+    function confirmarPersonalizado148(){
+      return new Promise(resolve=>{
+        const modal=document.getElementById('modalConfirmacao');modal.hidden=false;
+        const sim=document.getElementById('aceitarModal'),nao=document.getElementById('cancelarModal');
+        function concluir(valor){modal.hidden=true;sim.removeEventListener('click',aceitar);nao.removeEventListener('click',cancelar);resolve(valor);}
+        function aceitar(){concluir(true)}function cancelar(){concluir(false)}
+        sim.addEventListener('click',aceitar);nao.addEventListener('click',cancelar);nao.focus();
+      });
+    }
+    function alternarGestao148(aba){
+      document.getElementById('painelImportacao').hidden=aba!=='importacao';
+      document.getElementById('painelAditivos').hidden=aba!=='aditivos';
+      document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
+      document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
+      if(aba==='aditivos') carregarAditivos148();
+    }
+    document.getElementById('abaImportacao').addEventListener('click',()=>alternarGestao148('importacao'));
+    document.getElementById('abaAditivos').addEventListener('click',()=>alternarGestao148('aditivos'));
+    async function carregarAditivos148(){
+      const aviso=document.getElementById('avisoAditivos');aviso.textContent='Carregando aditivos...';
+      try{
+        const r=await requisicao({acao:'listarAditivos148',token:tokenSessao});
+        if(!r.sucesso){aviso.textContent=r.mensagem||'Falha ao consultar aditivos.';return;}
+        const corpo=document.getElementById('listaAditivos');corpo.replaceChildren();
+        for(const a of r.aditivos){
+          const tr=document.createElement('tr');
+          for(const valor of [a.codigo,a.descricao,a.classificacao,a.ativo?'Ativo':'Inativo']){const td=document.createElement('td');td.textContent=valor;tr.appendChild(td);}
+          const td=document.createElement('td'),botao=document.createElement('button');botao.type='button';botao.textContent='Editar';botao.className='secundario';botao.style.cssText='width:auto;margin:0;padding:8px 12px';
+          botao.addEventListener('click',()=>{document.getElementById('codigoAditivo').value=a.codigo;document.getElementById('descricaoAditivo').value=a.descricao;document.getElementById('classeAditivo').value=a.classificacao;document.getElementById('ativoAditivo').value=a.ativo?'SIM':'NAO';document.getElementById('codigoAditivo').focus();});
+          td.appendChild(botao);tr.appendChild(td);corpo.appendChild(tr);
+        }
+        aviso.textContent=r.aditivos.length+' aditivo(s) cadastrado(s).';
+      }catch(_){aviso.textContent='Falha de comunicação ao listar aditivos.';}
+    }
+    document.getElementById('formAditivo').addEventListener('submit',async function(e){
+      e.preventDefault();const botao=document.getElementById('salvarAditivo'),aviso=document.getElementById('avisoAditivos');botao.disabled=true;aviso.textContent='Salvando...';
+      try{
+        const r=await requisicao({acao:'salvarAditivo148',token:tokenSessao,codigo:document.getElementById('codigoAditivo').value.trim(),descricao:document.getElementById('descricaoAditivo').value.trim(),classificacao:document.getElementById('classeAditivo').value,ativo:document.getElementById('ativoAditivo').value==='SIM'});
+        if(!r.sucesso){aviso.textContent=r.mensagem||'Cadastro não realizado.';return;}
+        this.reset();await carregarAditivos148();aviso.textContent='Aditivo salvo com sucesso.';
+      }catch(_){aviso.textContent='Falha de comunicação ao salvar.';}finally{botao.disabled=false;}
+    });
     document.getElementById('confirmarImportacao').addEventListener('click', async function() {
       if(!tokenSessao||perfilSessao!=='GESTAO'||!linhasImportacao)return;
-      if(!confirm('Confirmar a substituição de PRODUTOS e ESTRUTURAS pelos dados deste Excel?'))return;
+      if(!(await confirmarPersonalizado148()))return;
       const botao=this;botao.disabled=true;
       const aviso=document.getElementById('avisoImportacao');aviso.textContent='Gravando importação...';
       try {
         const r=await requisicao({acao:'importarEstruturas147',token:tokenSessao,arquivo:nomeArquivoImportacao,linhas:linhasImportacao});
         aviso.textContent=r.sucesso?'Importação concluída: '+r.produtos+' produtos e '+r.componentes+' componentes.':(r.mensagem||'Importação rejeitada.');
-        if(r.sucesso){linhasImportacao=null;document.getElementById('arquivoEstrutura').value='';}
+        if(r.sucesso){linhasImportacao=null;document.getElementById('arquivoEstrutura').value='';document.getElementById('resumoImportacao').hidden=true;document.getElementById('confirmarImportacao').disabled=true;}
         else botao.disabled=false;
       }catch(_){aviso.textContent='Falha de comunicação. Confira o histórico antes de tentar novamente.';}
     });
@@ -300,7 +369,7 @@
         const r = await requisicao({acao:'consultarOP146',token:tokenSessao,etiqueta:document.getElementById('etiquetaOP').value});
         if (!r.sucesso) { avisoOP.textContent = r.mensagem || 'Consulta não realizada.'; return; }
         const d = document.getElementById('dadosOP'); d.replaceChildren();
-        const campos = [['OP',r.op],['Produto',r.produto],['Descrição',r.descricao],['Peso líquido',Number.isFinite(r.pesoLiquido)?String(r.pesoLiquido):'Não informado'],['Master de cor',r.masterPercentual+'%'],['Total estrutura',r.somaPercentual+'%']];
+        const campos = [['OP',r.op],['Produto',r.produto],['Descrição',r.descricao],['Peso líquido',Number.isFinite(r.pesoLiquido)?(new Intl.NumberFormat('pt-BR',{maximumFractionDigits:3}).format(r.pesoLiquido*1000)+' g'):'Não informado'],['Master de cor',r.masterPercentual+'%'],['Total estrutura',r.somaPercentual+'%']];
         for (const [k,v] of campos) { const el=document.createElement('span');el.textContent=k+': '+v;d.appendChild(el); }
         const avisoEstrutura=document.getElementById('validacaoEstrutura');
         avisoEstrutura.textContent=r.estruturaValida?'Estrutura validada (100% e componentes classificados).':'Atenção: estrutura incompleta, não totaliza 100% ou possui componentes sem classificação.';
