@@ -100,7 +100,7 @@
     </section>
     <section id="telaGestao" hidden>
       <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button></div>
+      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button></div>
       <div id="painelImportacao">
       <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
@@ -120,16 +120,31 @@
         <p style="text-align:left">Os códigos ativos serão identificados automaticamente nas estruturas, sem alterar o percentual importado.</p>
         <form id="formAditivo"><div class="grade-aditivo">
           <div><label for="codigoAditivo">Código do componente</label><input id="codigoAditivo" required maxlength="20" pattern="[0-9]{1,20}" placeholder="Ex.: 0020400"></div>
-          <div><label for="classeAditivo">Classificação</label><select id="classeAditivo"><option value="BIO">BIO</option><option value="UV">UV</option><option value="OUTRO">OUTRO</option></select></div>
+          <div><label for="classeAditivo">Classificação</label><select id="classeAditivo" required><option value="" selected disabled>Selecione a classificação</option><option value="BIO">BIO</option><option value="UV">UV</option><option value="OUTRO">OUTRO</option></select></div>
           <div><label for="descricaoAditivo">Descrição</label><input id="descricaoAditivo" required maxlength="200" placeholder="Descrição do aditivo"></div>
-          <div><label for="ativoAditivo">Situação</label><select id="ativoAditivo"><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div>
+          <div><label for="ativoAditivo">Situação</label><select id="ativoAditivo" required><option value="" selected disabled>Selecione a situação</option><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div>
         </div><button id="salvarAditivo" type="submit">Salvar aditivo</button></form>
         <div id="avisoAditivos" class="notice" role="status">Cadastre ou selecione um aditivo.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Código</th><th>Descrição</th><th>Classificação</th><th>Situação</th><th></th></tr></thead><tbody id="listaAditivos"></tbody></table></div>
       </div>
+      <div id="painelInjetoras" hidden>
+        <h3>Cadastro de injetoras</h3>
+        <p style="text-align:left">Cadastre os equipamentos que poderão ser selecionados pela Produção. Apenas injetoras ativas serão exibidas.</p>
+        <form id="formInjetora" autocomplete="off">
+          <input id="idInjetoraEdicao" type="hidden" value="">
+          <div class="grade-aditivo">
+            <div><label for="nomeInjetora">Nome da injetora</label><input id="nomeInjetora" required maxlength="80" placeholder="Digite o nome da injetora" autocomplete="off"></div>
+            <div><label for="ativoInjetora">Situação</label><select id="ativoInjetora" required><option value="" selected disabled>Selecione a situação</option><option value="SIM">Ativa</option><option value="NAO">Inativa</option></select></div>
+          </div>
+          <button id="salvarInjetora" type="submit">Salvar injetora</button>
+          <button id="limparInjetora" type="button" class="secundario">Limpar campos</button>
+        </form>
+        <div id="avisoInjetoras" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar uma injetora.</div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Injetora</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaInjetoras"></tbody></table></div>
+      </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.48</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.49</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -311,12 +326,70 @@
     function alternarGestao148(aba){
       document.getElementById('painelImportacao').hidden=aba!=='importacao';
       document.getElementById('painelAditivos').hidden=aba!=='aditivos';
+      document.getElementById('painelInjetoras').hidden=aba!=='injetoras';
       document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
       document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
+      document.getElementById('abaInjetoras').classList.toggle('ativo',aba==='injetoras');
       if(aba==='aditivos') carregarAditivos148();
+      if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
     }
     document.getElementById('abaImportacao').addEventListener('click',()=>alternarGestao148('importacao'));
     document.getElementById('abaAditivos').addEventListener('click',()=>alternarGestao148('aditivos'));
+    document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
+    function limparFormularioInjetora149() {
+      document.getElementById('formInjetora').reset();
+      document.getElementById('idInjetoraEdicao').value='';
+      document.getElementById('ativoInjetora').value='';
+    }
+    document.getElementById('limparInjetora').addEventListener('click',()=>{
+      limparFormularioInjetora149();
+      document.getElementById('avisoInjetoras').textContent='Campos limpos. Preencha os dados para cadastrar.';
+    });
+    async function carregarInjetoras149() {
+      const aviso=document.getElementById('avisoInjetoras');
+      aviso.textContent='Consultando injetoras...';
+      try {
+        const r=await requisicao({acao:'listarInjetoras149',token:tokenSessao});
+        if(!r.sucesso) {aviso.textContent=r.mensagem||'Não foi possível consultar as injetoras.';return;}
+        const corpo=document.getElementById('listaInjetoras');corpo.replaceChildren();
+        for(const inj of r.injetoras) {
+          const tr=document.createElement('tr');
+          for(const valor of [inj.nome,inj.ativo?'Ativa':'Inativa']) {
+            const td=document.createElement('td');td.textContent=valor;tr.appendChild(td);
+          }
+          const td=document.createElement('td');
+          const botao=document.createElement('button');botao.type='button';botao.textContent='Editar';botao.className='secundario';
+          botao.style.cssText='width:auto;margin:0;padding:8px 12px';
+          botao.addEventListener('click',()=>{
+            document.getElementById('idInjetoraEdicao').value=inj.id;
+            document.getElementById('nomeInjetora').value=inj.nome;
+            document.getElementById('ativoInjetora').value=inj.ativo?'SIM':'NAO';
+            aviso.textContent='Editando '+inj.nome+'.';
+            document.getElementById('nomeInjetora').focus();
+          });
+          td.appendChild(botao);tr.appendChild(td);corpo.appendChild(tr);
+        }
+        aviso.textContent=r.injetoras.length+' injetora(s) cadastrada(s).';
+      } catch(_) {aviso.textContent='Falha de comunicação ao consultar injetoras.';}
+    }
+    document.getElementById('formInjetora').addEventListener('submit',async function(e){
+      e.preventDefault();
+      const botao=document.getElementById('salvarInjetora');
+      const aviso=document.getElementById('avisoInjetoras');
+      const situacao=document.getElementById('ativoInjetora').value;
+      if(!situacao){aviso.textContent='Selecione a situação.';return;}
+      botao.disabled=true;aviso.textContent='Salvando injetora...';
+      try {
+        const r=await requisicao({acao:'salvarInjetora149',token:tokenSessao,
+          id:document.getElementById('idInjetoraEdicao').value,
+          nome:document.getElementById('nomeInjetora').value.trim(),ativo:situacao==='SIM'});
+        if(!r.sucesso){aviso.textContent=r.mensagem||'Não foi possível salvar.';return;}
+        limparFormularioInjetora149();
+        await carregarInjetoras149();
+        aviso.textContent='Injetora salva com sucesso.';
+      } catch(_) {aviso.textContent='Falha de comunicação ao salvar a injetora.';}
+      finally {botao.disabled=false;}
+    });
     async function carregarAditivos148(){
       const aviso=document.getElementById('avisoAditivos');aviso.textContent='Carregando aditivos...';
       try{
@@ -338,7 +411,7 @@
       try{
         const r=await requisicao({acao:'salvarAditivo148',token:tokenSessao,codigo:document.getElementById('codigoAditivo').value.trim(),descricao:document.getElementById('descricaoAditivo').value.trim(),classificacao:document.getElementById('classeAditivo').value,ativo:document.getElementById('ativoAditivo').value==='SIM'});
         if(!r.sucesso){aviso.textContent=r.mensagem||'Cadastro não realizado.';return;}
-        this.reset();await carregarAditivos148();aviso.textContent='Aditivo salvo com sucesso.';
+        this.reset();document.getElementById('classeAditivo').value='';document.getElementById('ativoAditivo').value='';await carregarAditivos148();aviso.textContent='Aditivo salvo com sucesso.';
       }catch(_){aviso.textContent='Falha de comunicação ao salvar.';}finally{botao.disabled=false;}
     });
     document.getElementById('confirmarImportacao').addEventListener('click', async function() {
