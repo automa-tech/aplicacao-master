@@ -125,6 +125,11 @@
           <div id="blocoCadeia152" hidden>
             <p>Não conformidade persistente. Acione a Cadeia de Ajuda.</p>
             <button id="abrirEmail152" type="button">Preparar e-mail da Cadeia de Ajuda</button>
+            <div id="passoOutlook155" class="resultado" hidden>
+              <p id="avisoOutlook155">E-mail preparado. Abra o Outlook, confira os destinatários e envie.</p>
+              <button id="abrirOutlook155" type="button">Abrir Outlook com e-mail preparado</button>
+              <button id="confirmarRetorno155" type="button" class="secundario" hidden>Já abri o Outlook — continuar</button>
+            </div>
             <div class="notice">O e-mail será preparado no aplicativo de e-mail padrão. Confira e selecione os destinatários antes de enviar.</div>
           </div>
         </section>
@@ -198,7 +203,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.54</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.55</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -333,6 +338,7 @@
           botao.addEventListener('click',async()=>{
             botao.disabled=true;
             try{
+              reiniciarEmail155();
               const situacao=await consultarEstado152(o.idAplicacao);
               aviso.textContent='Ocorrência carregada: OP '+situacao.op;
               document.getElementById('painelNC152').scrollIntoView({behavior:'smooth',block:'start'});
@@ -377,7 +383,21 @@
       finally{trabalhandoNC152=false;btn.disabled=false;}
     });
     let idEmailPreparado154=null;
+    let linkOutlook155=null;
     let confirmandoEnvio154=false;
+    let avisoVerdeTimer155=null;
+    function limparAvisoVerde155() {
+      if(avisoVerdeTimer155!==null){clearTimeout(avisoVerdeTimer155);avisoVerdeTimer155=null;}
+      const el=document.getElementById('avisoOP');
+      if(el.classList.contains('ok')){el.textContent='Aguardando leitura da etiqueta.';el.className='notice';}
+    }
+    function reiniciarEmail155() {
+      idEmailPreparado154=null;
+      linkOutlook155=null;
+      document.getElementById('passoOutlook155').hidden=true;
+      document.getElementById('confirmarRetorno155').hidden=true;
+      document.getElementById('modalEnvio154').hidden=true;
+    }
     function limparOcorrencia154() {
       document.getElementById('etiquetaOP').value='';
       document.getElementById('resultadoOP').hidden=true;
@@ -404,23 +424,36 @@
         const r=await requisicao({acao:'prepararEmailCadeia154',token:tokenSessao,
           idAplicacao:estadoOcorrencia152.idAplicacao});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha ao preparar e-mail.');
-        // mailto usa o cliente padrão; o operador continua responsável pelo envio.
         idEmailPreparado154=r.idAplicacao;
-        document.getElementById('textoEnvio154').textContent=
-          'O e-mail foi preparado para o aplicativo de e-mail. Envie no Outlook e depois confirme aqui. '+
-          'Não confirme se apenas abriu o rascunho.';
-        document.getElementById('avisoEnvio154').textContent='';
-        document.getElementById('modalEnvio154').hidden=false;
-        const link='mailto:?subject='+encodeURIComponent(r.assunto)+'&body='+encodeURIComponent(r.corpo);
-        window.location.href=link;
+        linkOutlook155='mailto:?subject='+encodeURIComponent(r.assunto)+'&body='+encodeURIComponent(r.corpo);
+        document.getElementById('passoOutlook155').hidden=false;
+        document.getElementById('confirmarRetorno155').hidden=true;
+        document.getElementById('statusNC152').textContent='E-mail preparado. Clique em Abrir Outlook.';
+        document.getElementById('abrirOutlook155').focus();
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
       finally{btn.disabled=false;}
+    });
+    document.getElementById('abrirOutlook155').addEventListener('click',function(){
+      if(!linkOutlook155||!idEmailPreparado154)return;
+      // O navegador não confirma que o Outlook abriu ou que o e-mail foi enviado.
+      // O acionamento é feito diretamente pelo clique do operador.
+      window.location.href=linkOutlook155;
+      document.getElementById('confirmarRetorno155').hidden=false;
+      document.getElementById('avisoOutlook155').textContent=
+        'Confira e envie no Outlook. Depois volte aqui e clique em Já abri o Outlook — continuar.';
+    });
+    document.getElementById('confirmarRetorno155').addEventListener('click',function(){
+      if(!idEmailPreparado154)return;
+      document.getElementById('textoEnvio154').textContent=
+        'Você enviou o e-mail pelo Outlook? Confirme SIM somente se o envio foi realizado.';
+      document.getElementById('avisoEnvio154').textContent='';
+      document.getElementById('modalEnvio154').hidden=false;
     });
     document.getElementById('naoEnvio154').addEventListener('click',function(){
       document.getElementById('modalEnvio154').hidden=true;
       document.getElementById('statusNC152').textContent=
-        'E-mail ainda não confirmado. A ocorrência permanece pendente.';
-      idEmailPreparado154=null;
+        'Envio não confirmado. A ocorrência permanece pendente.';
+      // Mantém o e-mail preparado para nova tentativa, sem registrar acionamento.
     });
     document.getElementById('simEnvio154').addEventListener('click',async function(){
       if(confirmandoEnvio154||!idEmailPreparado154)return;
@@ -434,11 +467,19 @@
           chaveRequisicao:crypto.randomUUID(),confirmouEnvio:true});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha ao registrar confirmação.');
         document.getElementById('modalEnvio154').hidden=true;
-        idEmailPreparado154=null;
+        reiniciarEmail155();
         limparOcorrencia154();
         const m=document.getElementById('avisoOP');
         m.textContent='Cadeia de Ajuda acionada e registrada. A ocorrência permanece não conforme até tratativa.';
         m.className='notice ok';
+        if(avisoVerdeTimer155!==null)clearTimeout(avisoVerdeTimer155);
+        avisoVerdeTimer155=setTimeout(function(){
+          if(m.classList.contains('ok')){
+            m.textContent='Aguardando leitura da próxima etiqueta.';
+            m.className='notice';
+          }
+          avisoVerdeTimer155=null;
+        },15000);
       }catch(e){aviso.textContent=e.message;}
       finally{confirmandoEnvio154=false;botao.disabled=false;}
     });
@@ -818,15 +859,18 @@
       }catch(_){aviso.textContent='Falha de comunicação. Confira o histórico antes de tentar novamente.';}
     });
     document.getElementById('voltarInicio').addEventListener('click', function() {
+      limparAvisoVerde155();
       telaProducao.hidden = true;
       telaInicial.hidden = false;
     });
     document.getElementById('etiquetaOP').addEventListener('input', function() {
+      limparAvisoVerde155();
       consultaAtual150 = null;
       chaveAtual150 = null;
       document.getElementById('resultadoOP').hidden = true;
     });
     document.getElementById('formOP').addEventListener('submit', async function(e) {
+      limparAvisoVerde155();
       e.preventDefault();
       const avisoOP = document.getElementById('avisoOP');
       const botao = document.getElementById('consultarOP');
