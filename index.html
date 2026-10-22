@@ -260,6 +260,16 @@
         </form>
         <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa tabela-usuarios-compacta"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <form id="formEditarUsuario164" hidden autocomplete="off" style="border:1px solid #dce2e9;border-radius:12px;padding:16px;margin:12px 0">
+          <h3>Editar usuário</h3>
+          <p id="alvoEditar164"></p>
+          <div class="grade-aditivo">
+            <div><label for="nomeEditar164">Nome</label><input id="nomeEditar164" minlength="3" maxlength="100" required></div>
+            <div><label for="perfilEditar164">Perfil</label><select id="perfilEditar164" required><option value="PRODUCAO">Produção</option><option value="GESTAO">Gestão</option></select></div>
+          </div>
+          <button id="salvarEditar164" type="submit">Salvar alterações</button>
+          <button id="cancelarEditar164" class="secundario" type="button">Cancelar</button>
+        </form>
         <form id="formRedefinir162" hidden autocomplete="off" style="border:1px solid #dce2e9;border-radius:12px;padding:16px;margin:12px 0">
           <h3>Alterar senha de usuário</h3>
           <p id="alvoSenha162"></p>
@@ -1091,12 +1101,45 @@
             painel.reset();painel.hidden=false;
             document.getElementById('novaSenhaGestao162').focus();
           });
+          const botaoEditar=document.createElement('button');
+          botaoEditar.type='button';botaoEditar.className='secundario';botaoEditar.textContent='Editar';
+          botaoEditar.addEventListener('click',()=>{
+            const painel=document.getElementById('formEditarUsuario164');
+            painel.dataset.matricula=u.matricula;
+            document.getElementById('alvoEditar164').textContent='Matrícula '+u.matricula;
+            document.getElementById('nomeEditar164').value=u.nome;
+            document.getElementById('perfilEditar164').value=u.perfil;
+            painel.hidden=false;
+            document.getElementById('nomeEditar164').focus();
+          });
+          acoes.appendChild(botaoEditar);
           acoes.appendChild(botaoSenha);
           acoes.appendChild(botao);celula.appendChild(acoes);tr.appendChild(celula);tbody.appendChild(tr);
         });
         aviso.textContent=(r.usuarios||[]).length+' usuário(s) cadastrado(s).';
       }catch(e){aviso.textContent=e.message||'Falha ao consultar usuários.';}
     }
+    document.getElementById('cancelarEditar164').addEventListener('click',()=>{
+      const f=document.getElementById('formEditarUsuario164');f.reset();f.hidden=true;
+    });
+    document.getElementById('formEditarUsuario164').addEventListener('submit',async function(e){
+      e.preventDefault();
+      const aviso=document.getElementById('avisoUsuarios160');
+      const nome=document.getElementById('nomeEditar164').value.trim();
+      const perfil=document.getElementById('perfilEditar164').value;
+      if(nome.length<3||nome.length>100||!['GESTAO','PRODUCAO'].includes(perfil)){
+        aviso.textContent='Informe nome e perfil válidos.';return;
+      }
+      const botao=document.getElementById('salvarEditar164');botao.disabled=true;
+      aviso.textContent='Salvando alterações...';
+      try{
+        const r=await requisicao({acao:'editarUsuario164',token:tokenSessao,matricula:this.dataset.matricula,nome,perfil});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao editar usuário.');
+        this.hidden=true;this.reset();
+        await carregarUsuarios160();aviso.textContent=r.mensagem||'Usuário atualizado.';
+      }catch(err){aviso.textContent=err.message||'Não foi possível salvar.';}
+      finally{botao.disabled=false;}
+    });
     document.getElementById('cancelarSenhaGestao162').addEventListener('click',()=>{
       const f=document.getElementById('formRedefinir162');f.reset();f.hidden=true;
     });
