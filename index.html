@@ -153,7 +153,7 @@
     </section>
     <section id="telaGestao" hidden>
       <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaPainel157" class="ativo" type="button">Painel Geral</button><button id="abaRegistros157" type="button">Registros</button><button id="abaImportacao" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
+      <div class="abas-gestao"><button id="abaPainel157" class="ativo" type="button">Painel Geral</button><button id="abaRegistros157" type="button">Registros</button><button id="abaImportacao" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaUsuarios160" type="button">Usuários</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
       <div id="painelGeral157">
         <h3>Painel Geral — Consumo estimado de materiais</h3>
         <div class="dash-filtros">
@@ -230,6 +230,20 @@
         <div id="avisoDosador151" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Dosador</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDosadores151"></tbody></table></div>
       </div>
+      <div id="painelUsuarios160" hidden>
+        <h3>Usuários — Cadastro de acessos</h3>
+        <p style="text-align:left">Somente Gestão. Matrículas existentes não podem ser cadastradas novamente.</p>
+        <form id="formUsuarios160" class="grade-aditivo" autocomplete="off">
+          <div><label for="matricula160">Matrícula</label><input id="matricula160" inputmode="numeric" maxlength="20" required></div>
+          <div><label for="nome160">Nome</label><input id="nome160" maxlength="100" required></div>
+          <div><label for="perfil160">Perfil</label><select id="perfil160" required><option value="">Selecione</option><option value="PRODUCAO">Produção</option><option value="GESTAO">Gestão</option></select></div>
+          <div><label for="senha160">Senha inicial (mínimo 8 caracteres)</label><input id="senha160" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></div>
+          <div><button id="salvarUsuario160" type="submit">Cadastrar usuário</button></div>
+        </form>
+        <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <button id="atualizarUsuarios160" class="secundario" type="button">Atualizar lista</button>
+      </div>
       <div id="painelHistorico156" hidden>
         <h3>Histórico de aplicações e contraprovas</h3>
         <p style="text-align:left">Consulta somente leitura. Os relatórios de consumo serão definidos posteriormente.</p>
@@ -244,7 +258,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.57</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.60</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -951,13 +965,16 @@
       document.getElementById('painelInjetoras').hidden=aba!=='injetoras';
       document.getElementById('painelDosadores').hidden=aba!=='dosadores';
       document.getElementById('painelHistorico156').hidden=aba!=='historico';
+      document.getElementById('painelUsuarios160').hidden=aba!=='usuarios';
       document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
       document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
       document.getElementById('abaInjetoras').classList.toggle('ativo',aba==='injetoras');
       document.getElementById('abaDosadores').classList.toggle('ativo',aba==='dosadores');
       document.getElementById('abaHistorico156').classList.toggle('ativo',aba==='historico');
+      document.getElementById('abaUsuarios160').classList.toggle('ativo',aba==='usuarios');
       if(aba==='aditivos') carregarAditivos148();
       if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
+      if(aba==='usuarios') carregarUsuarios160();
       if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
     }
     document.getElementById('abaPainel157').addEventListener('click',()=>{alternarGestao148('painel');if(!dadosPainel157) consultarPainel157();});
@@ -967,6 +984,41 @@
     document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
     document.getElementById('abaDosadores').addEventListener('click',()=>alternarGestao148('dosadores'));
     document.getElementById('abaHistorico156').addEventListener('click',()=>alternarGestao148('historico'));
+    async function carregarUsuarios160(){
+      const aviso=document.getElementById('avisoUsuarios160');
+      const tbody=document.getElementById('listaUsuarios160');
+      aviso.textContent='Consultando usuários...';tbody.replaceChildren();
+      try {
+        const r=await requisicao({acao:'listarUsuarios160',token:tokenSessao});
+        if(!r.sucesso) throw new Error(r.mensagem||'Falha na consulta.');
+        (r.usuarios||[]).forEach(u=>{
+          const tr=document.createElement('tr');
+          [u.matricula,u.nome,u.perfil==='GESTAO'?'Gestão':'Produção',u.ativo?'Ativo':'Inativo'].forEach(valor=>{
+            const td=document.createElement('td');td.textContent=String(valor);tr.appendChild(td);
+          });tbody.appendChild(tr);
+        });
+        aviso.textContent=(r.usuarios||[]).length+' usuário(s) cadastrado(s).';
+      }catch(e){aviso.textContent=e.message||'Falha ao consultar usuários.';}
+    }
+    document.getElementById('abaUsuarios160').addEventListener('click',()=>alternarGestao148('usuarios'));
+    document.getElementById('atualizarUsuarios160').addEventListener('click',carregarUsuarios160);
+    document.getElementById('formUsuarios160').addEventListener('submit',async function(e){
+      e.preventDefault();
+      const botao=document.getElementById('salvarUsuario160'),aviso=document.getElementById('avisoUsuarios160');
+      const matricula=document.getElementById('matricula160').value.trim();
+      const nome=document.getElementById('nome160').value.trim();
+      const perfil=document.getElementById('perfil160').value;
+      const senha=document.getElementById('senha160').value;
+      if(!/^\d{1,20}$/.test(matricula)||nome.length<3||!perfil||senha.length<8){aviso.textContent='Preencha todos os campos corretamente.';return;}
+      botao.disabled=true;aviso.textContent='Cadastrando usuário...';
+      try{
+        const r=await requisicao({acao:'cadastrarUsuario160',token:tokenSessao,matricula,nome,perfil,senha});
+        aviso.textContent=r.mensagem||(r.sucesso?'Usuário cadastrado.':'Falha ao cadastrar.');
+        if(r.sucesso){this.reset();await carregarUsuarios160();aviso.textContent='Usuário cadastrado com sucesso.';}
+      }catch(err){aviso.textContent='Não foi possível cadastrar o usuário.';}
+      finally{botao.disabled=false;document.getElementById('senha160').value='';}
+    });
+
     document.getElementById('buscarHistorico156').addEventListener('click',async function(){
       const botao=this,aviso=document.getElementById('avisoHistorico156'),lista=document.getElementById('listaHistorico156');
       botao.disabled=true;aviso.textContent='Consultando registros...';lista.replaceChildren();
