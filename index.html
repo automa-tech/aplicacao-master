@@ -872,16 +872,26 @@
     let dadosPainel157=null;
     function numero157(v){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
     function dataLocal157(d){const a=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dia=String(d.getDate()).padStart(2,'0');return `${a}-${m}-${dia}`;}
+    // Etapa 1.63: evita recalcular o mesmo painel ao voltar para Gestão.
+    let ultimaConsultaPainel163=0;
+    let consultaPainelEmAndamento163=false;
     function inicializarPainel157(){
+      if(dadosPainel157 && Date.now()-ultimaConsultaPainel163 < 120000){
+        renderizarPainel157();
+        document.getElementById('avisoPainel157').textContent='Dados da consulta recente. Clique em Atualizar para consultar novamente.';
+        return;
+      }
       const hoje=new Date();document.getElementById('dataInicio157').value=dataLocal157(new Date(hoje.getFullYear(),hoje.getMonth(),1));
       document.getElementById('dataFim157').value=dataLocal157(hoje);
       document.getElementById('injetoraFiltro157').value='';document.getElementById('statusFiltro157').value='';
-      dadosPainel157=null;consultarPainel157();
+      consultarPainel157();
     }
     function td157(tr,valor){const td=document.createElement('td');td.textContent=String(valor==null?'—':valor);tr.appendChild(td);return td;}
     function preencherTabela157(id,linhas){const corpo=document.getElementById(id);corpo.replaceChildren();if(!linhas.length){const tr=document.createElement('tr');const td=td157(tr,'Nenhum registro encontrado.');td.colSpan=9;corpo.appendChild(tr);}else linhas.forEach(tr=>corpo.appendChild(tr));}
     function linha157(valores){const tr=document.createElement('tr');valores.forEach(v=>td157(tr,v));return tr;}
     async function consultarPainel157(){
+      if(consultaPainelEmAndamento163)return;
+      consultaPainelEmAndamento163=true;
       const aviso=document.getElementById('avisoPainel157'),consultar=document.getElementById('consultarPainel157');
       consultar.disabled=true;aviso.textContent='Consultando dados e calculando indicadores...';aviso.className='notice';
       try{
@@ -890,10 +900,10 @@
         const r=await requisicao({acao:'painelGeral157',token:tokenSessao,inicio,fim,
           injetora:document.getElementById('injetoraFiltro157').value,status:document.getElementById('statusFiltro157').value});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha ao consultar o painel.');
-        dadosPainel157=r;renderizarPainel157();
+        dadosPainel157=r;ultimaConsultaPainel163=Date.now();renderizarPainel157();
         aviso.textContent=`${r.resumo.aplicacoes} aplicação(ões) no período.`+(r.resumo.semCalculo?` ${r.resumo.semCalculo} sem cálculo por dados inválidos.`:'')+(r.baseParcial?' Atenção: base parcial devido ao limite de leitura.':'');
       }catch(e){aviso.textContent=e.message||'Erro ao consultar.';aviso.className='notice error';}
-      finally{consultar.disabled=false;}
+      finally{consultar.disabled=false;consultaPainelEmAndamento163=false;}
     }
     function renderizarPainel157(){
       const r=dadosPainel157,z=r.resumo,cards=document.getElementById('cardsPainel157');cards.replaceChildren();
