@@ -874,16 +874,66 @@
       document.getElementById('avisoRegistros157').textContent=`Exibindo ${r.registros.length} registros`+(r.limiteRegistros?' (limite de 1.000; refine o período).':'.');
       preencherTabela157('tabelaRegistros157',r.registros.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,x.producaoKg==null?'—':numero157(x.producaoKg),x.economiaKg==null?'—':numero157(x.economiaKg),x.adicionalKg==null?'—':numero157(x.adicionalKg),x.status])));
     }
+    // Etapa 1.59 — Relatório Excel com filtros, unidades, formatos e aviso de limites.
     function exportarExcel157(){
-      if(!dadosPainel157){document.getElementById('avisoPainel157').textContent='Consulte os dados antes de exportar.';return;}
-      if(typeof XLSX==='undefined'){document.getElementById('avisoPainel157').textContent='Biblioteca Excel indisponível. Verifique sua conexão.';return;}
-      const r=dadosPainel157,wb=XLSX.utils.book_new();
-      const adicionar=(nome,cab,linhas)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([cab,...linhas]),nome);
-      adicionar('Resumo',['Indicador','Valor','Unidade'],Object.entries(r.resumo).map(([k,v])=>[k,v,k==='conformidadePercentual'?'%':k==='aplicacoes'||k==='conformes'||k==='semCalculo'?'registros':'kg']));
-      adicionar('Injetoras',['Injetora','Produção kg','Economia Master kg','Master adicional kg','Saldo kg','OPs'],r.injetoras.map(x=>[x.codigo,x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]));
-      adicionar('Masters',['Código','Descrição','Produção ponderada kg','Economia Master kg','Master adicional kg','Saldo kg','OPs'],r.masters.map(x=>[x.codigo,x.descricao,x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]));
-      adicionar('Aplicações',['Data','OP','Produto','Injetora','Status','Estrutura %','Última contraprova %','Produção kg','Economia kg','Adicional kg'],r.registros.map(x=>[x.dataHora,x.op,x.produto,x.injetora,x.status,x.masterEstrutura,x.ultimaContraprova,x.producaoKg,x.economiaKg,x.adicionalKg]));
-      XLSX.writeFile(wb,`SPILTAG_Painel_${r.periodo.inicio}_${r.periodo.fim}.xlsx`);
+      const aviso=document.getElementById('avisoPainel157');
+      if(!dadosPainel157){aviso.textContent='Consulte os dados antes de exportar.';return;}
+      if(typeof XLSX==='undefined'){aviso.textContent='Biblioteca Excel indisponível. Verifique sua conexão.';return;}
+      const r=dadosPainel157;
+      // Não apresentar um arquivo incompleto como relatório integral.
+      if(r.baseParcial||r.limiteRegistros){
+        aviso.className='notice error';
+        aviso.textContent='Exportação bloqueada: há registros fora do limite de consulta. Reduza o período ou os filtros para gerar um relatório completo.';
+        return;
+      }
+      const wb=XLSX.utils.book_new();
+      const adicionar=(nome,cab,linhas,larguras,percentuais=[])=>{
+        const ws=XLSX.utils.aoa_to_sheet([cab,...linhas]);
+        ws['!cols']=larguras.map(w=>({wch:w}));
+        ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(0,linhas.length),c:cab.length-1}})};
+        for(let row=1;row<=linhas.length;row++){
+          for(let col=0;col<cab.length;col++){
+            const cel=ws[XLSX.utils.encode_cell({r:row,c:col})];
+            if(cel&&cel.t==='n')cel.z=percentuais.includes(col)?'0.00"%"':'#,##0.00';
+          }
+        }
+        XLSX.utils.book_append_sheet(wb,ws,nome);
+      };
+      const fInjetora=document.getElementById('injetoraFiltro157');
+      const fStatus=document.getElementById('statusFiltro157');
+      const filtros=[
+        ['Data inicial',r.periodo.inicio],['Data final',r.periodo.fim],
+        ['Injetora',fInjetora.value||'Todas'],
+        ['Status',fStatus.value==='CONFORME'?'Conforme':fStatus.value==='NAO_CONFORME'?'Não conforme':'Todos'],
+        ['Critério de consumo','Última contraprova aplicada à produção total registrada'],
+        ['Natureza dos valores','Estimativas em kg; não representam consumo físico medido'],
+        ['Total de aplicações',r.resumo.aplicacoes],
+        ['Aplicações conformes',r.resumo.conformes],
+        ['Aplicações sem cálculo válido',r.resumo.semCalculo]
+      ];
+      adicionar('Parâmetros',['Parâmetro','Valor'],filtros,[34,82]);
+      const z=r.resumo;
+      adicionar('Resumo',['Indicador','Valor','Unidade'],[
+        ['Produção considerada',z.producaoKg,'kg'],
+        ['Master economizado',z.masterEconomiaKg,'kg'],
+        ['Master consumido a mais',z.masterAdicionalKg,'kg'],
+        ['Resina economizada',z.resinaEconomiaKg,'kg'],
+        ['Resina consumida a mais',z.resinaAdicionalKg,'kg'],
+        ['Saldo líquido de Master',z.saldoMasterKg,'kg'],
+        ['Conformidade',z.conformidadePercentual,'%'],
+        ['Aplicações',z.aplicacoes,'registros']
+      ],[36,20,15],[1]);
+      adicionar('Injetoras',['Injetora','Produção (kg)','Master economizado (kg)','Master adicional (kg)','Saldo (kg)','OPs'],
+        r.injetoras.map(x=>[String(x.codigo),x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]),[16,20,27,25,18,12]);
+      adicionar('Masters',['Código Master','Descrição','Produção ponderada (kg)','Master economizado (kg)','Master adicional (kg)','Saldo (kg)','OPs'],
+        r.masters.map(x=>[String(x.codigo),x.descricao,x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]),[19,58,27,27,25,18,12]);
+      adicionar('Aplicações',['Data e hora','OP','Produto','Injetora','Status','Estrutura (%)','Última contraprova (%)','Produção (kg)','Master economizado (kg)','Master adicional (kg)'],
+        r.registros.map(x=>[x.dataHora,String(x.op),String(x.produto),String(x.injetora),x.status,x.masterEstrutura,x.ultimaContraprova,x.producaoKg,x.economiaKg,x.adicionalKg]),
+        [23,25,25,16,20,20,27,20,28,25],[5,6]);
+      try{
+        XLSX.writeFile(wb,`SPILTAG_Relatorio_${r.periodo.inicio}_a_${r.periodo.fim}.xlsx`);
+        aviso.className='notice';aviso.textContent='Relatório Excel gerado com os filtros e registros consultados.';
+      }catch(e){aviso.className='notice error';aviso.textContent='Não foi possível gerar o Excel. Tente novamente.';}
     }
     document.getElementById('consultarPainel157').addEventListener('click',consultarPainel157);
     document.getElementById('atualizarPainel157').addEventListener('click',consultarPainel157);
