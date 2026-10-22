@@ -63,6 +63,18 @@
         <input id="senha" name="senha" type="password" autocomplete="current-password" maxlength="256" placeholder="Digite sua senha" required>
         <button id="entrar" type="submit">Entrar</button>
       </form>
+      <form id="formTroca162" autocomplete="off" hidden>
+        <h3>Troca obrigatória de senha</h3>
+        <p>Defina uma nova senha para continuar utilizando o sistema.</p>
+        <label for="senhaTemporaria162">Senha temporária</label>
+        <input id="senhaTemporaria162" type="password" autocomplete="current-password" maxlength="256" required>
+        <label for="senhaNova162">Nova senha (mínimo 8 caracteres)</label>
+        <input id="senhaNova162" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <label for="senhaConfirma162">Confirmar nova senha</label>
+        <input id="senhaConfirma162" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+        <button id="confirmarTroca162" type="submit">Alterar minha senha</button>
+        <button id="cancelarTroca162" class="secundario" type="button">Cancelar</button>
+      </form>
       <div id="avisoLogin" class="notice" role="status" aria-live="polite">Informe sua matrícula e senha para acessar.</div>
     </section>
     <section id="telaInicial" hidden>
@@ -241,7 +253,17 @@
           <div><button id="salvarUsuario160" type="submit">Cadastrar usuário</button></div>
         </form>
         <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
-        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <form id="formRedefinir162" hidden autocomplete="off" style="border:1px solid #dce2e9;border-radius:12px;padding:16px;margin:12px 0">
+          <h3>Alterar senha de usuário</h3>
+          <p id="alvoSenha162"></p>
+          <label for="novaSenhaGestao162">Nova senha temporária</label>
+          <input id="novaSenhaGestao162" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+          <label for="confirmaSenhaGestao162">Confirmar senha temporária</label>
+          <input id="confirmaSenhaGestao162" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+          <button id="salvarSenhaGestao162" type="submit">Salvar nova senha</button>
+          <button id="cancelarSenhaGestao162" class="secundario" type="button">Cancelar</button>
+        </form>
         <button id="atualizarUsuarios160" class="secundario" type="button">Atualizar lista</button>
       </div>
       <div id="painelHistorico156" hidden>
@@ -699,6 +721,29 @@
       atualizarStatusConexao();
       senha.value = '';
     }
+    document.getElementById('cancelarTroca162').addEventListener('click',()=>{
+      document.getElementById('formTroca162').reset();
+      document.getElementById('formTroca162').hidden=true;
+      document.getElementById('login').hidden=false;
+      mensagem('Informe sua matrícula e senha para acessar.',false);
+    });
+    document.getElementById('formTroca162').addEventListener('submit',async function(event){
+      event.preventDefault();
+      const atual=document.getElementById('senhaTemporaria162').value;
+      const nova=document.getElementById('senhaNova162').value;
+      const confirma=document.getElementById('senhaConfirma162').value;
+      if(nova.length<8||nova.length>128||nova!==confirma||nova===atual){
+        mensagem('Confira a nova senha: mínimo 8 caracteres, diferente da temporária e com confirmação igual.',true);return;
+      }
+      const botao=document.getElementById('confirmarTroca162');botao.disabled=true;
+      try{
+        const r=await requisicao({acao:'trocarSenhaObrigatoria162',matricula:matricula.value.trim(),senhaAtual:atual,novaSenha:nova});
+        if(!r.sucesso)throw new Error(r.mensagem||'Não foi possível alterar a senha.');
+        this.reset();this.hidden=true;document.getElementById('login').hidden=false;
+        mensagem(r.mensagem||'Senha alterada. Entre novamente.',false);
+      }catch(err){mensagem(err.message||'Erro ao alterar senha.',true);}
+      finally{botao.disabled=false;}
+    });
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
       if (ocupado) return;
@@ -712,6 +757,14 @@
       entrar.textContent = 'Validando acesso...';
       try {
         const dados = await requisicao({acao:'login',matricula:usuario,senha:senha.value});
+        if(dados.trocarSenha===true){
+          document.getElementById('login').hidden=true;
+          document.getElementById('formTroca162').hidden=false;
+          document.getElementById('senhaTemporaria162').value=senha.value;
+          senha.value='';
+          mensagem('É obrigatório definir uma nova senha antes de entrar.',false);
+          return;
+        }
         if (!dados.sucesso || !/^[a-f0-9]{64}$/i.test(String(dados.token || ''))) {
           mensagem(dados.mensagem || 'Não foi possível entrar.', true);
           senha.value = '';
@@ -995,11 +1048,55 @@
           const tr=document.createElement('tr');
           [u.matricula,u.nome,u.perfil==='GESTAO'?'Gestão':'Produção',u.ativo?'Ativo':'Inativo'].forEach(valor=>{
             const td=document.createElement('td');td.textContent=String(valor);tr.appendChild(td);
-          });tbody.appendChild(tr);
+          });
+          const celula=document.createElement('td');
+          const botao=document.createElement('button');
+          botao.type='button';botao.className='secundario';
+          botao.textContent=u.ativo?'Desativar':'Ativar';
+
+          botao.addEventListener('click',async()=>{
+            const novaSituacao=!u.ativo;
+            if(!confirm((novaSituacao?'Ativar':'Desativar')+' o acesso de '+u.nome+' ('+u.matricula+')?'))return;
+            botao.disabled=true;aviso.textContent='Atualizando situação...';
+            try{
+              const resultado=await requisicao({acao:'alterarSituacaoUsuario161',token:tokenSessao,matricula:u.matricula,ativo:novaSituacao});
+              if(!resultado.sucesso)throw new Error(resultado.mensagem||'Falha na atualização.');
+              await carregarUsuarios160();aviso.textContent=resultado.mensagem;
+            }catch(err){aviso.textContent=err.message||'Falha ao alterar situação.';botao.disabled=false;}
+          });
+          const botaoSenha=document.createElement('button');
+          botaoSenha.type='button';botaoSenha.className='secundario';
+          botaoSenha.textContent='Alterar senha';botaoSenha.style.marginLeft='8px';
+          botaoSenha.addEventListener('click',()=>{
+            const painel=document.getElementById('formRedefinir162');
+            painel.dataset.matricula=u.matricula;
+            document.getElementById('alvoSenha162').textContent=u.nome+' — Matrícula '+u.matricula;
+            painel.reset();painel.hidden=false;
+            document.getElementById('novaSenhaGestao162').focus();
+          });
+          celula.appendChild(botaoSenha);
+          celula.appendChild(botao);tr.appendChild(celula);tbody.appendChild(tr);
         });
         aviso.textContent=(r.usuarios||[]).length+' usuário(s) cadastrado(s).';
       }catch(e){aviso.textContent=e.message||'Falha ao consultar usuários.';}
     }
+    document.getElementById('cancelarSenhaGestao162').addEventListener('click',()=>{
+      const f=document.getElementById('formRedefinir162');f.reset();f.hidden=true;
+    });
+    document.getElementById('formRedefinir162').addEventListener('submit',async function(e){
+      e.preventDefault();
+      const nova=document.getElementById('novaSenhaGestao162').value;
+      const confirma=document.getElementById('confirmaSenhaGestao162').value;
+      const aviso=document.getElementById('avisoUsuarios160');
+      if(nova.length<8||nova.length>128||nova!==confirma){aviso.textContent='As senhas devem ser iguais e conter de 8 a 128 caracteres.';return;}
+      const botao=document.getElementById('salvarSenhaGestao162');botao.disabled=true;
+      try{
+        const r=await requisicao({acao:'redefinirSenhaUsuario162',token:tokenSessao,matricula:this.dataset.matricula,novaSenha:nova});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao redefinir senha.');
+        this.reset();this.hidden=true;aviso.textContent=r.mensagem;
+      }catch(err){aviso.textContent=err.message||'Falha ao redefinir senha.';}
+      finally{botao.disabled=false;}
+    });
     document.getElementById('abaUsuarios160').addEventListener('click',()=>alternarGestao148('usuarios'));
     document.getElementById('atualizarUsuarios160').addEventListener('click',carregarUsuarios160);
     document.getElementById('formUsuarios160').addEventListener('submit',async function(e){
