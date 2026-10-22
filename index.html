@@ -144,7 +144,7 @@
     </section>
     <section id="telaGestao" hidden>
       <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button></div>
+      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
       <div id="painelImportacao">
       <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
@@ -201,9 +201,21 @@
         <div id="avisoDosador151" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Dosador</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDosadores151"></tbody></table></div>
       </div>
+      <div id="painelHistorico156" hidden>
+        <h3>Histórico de aplicações e contraprovas</h3>
+        <p style="text-align:left">Consulta somente leitura. Os relatórios de consumo serão definidos posteriormente.</p>
+        <div class="grade-aditivo">
+          <div><label for="filtroOp156">OP</label><input id="filtroOp156" autocomplete="off" placeholder="Todas as OPs"></div>
+          <div><label for="filtroProduto156">Produto</label><input id="filtroProduto156" autocomplete="off" placeholder="Todos os produtos"></div>
+          <div><label for="filtroStatus156">Status</label><select id="filtroStatus156"><option value="">Todos</option><option value="CONFORME">CONFORME</option><option value="NC_RECALIBRAGEM">NC_RECALIBRAGEM</option><option value="NC_CADEIA_AJUDA">NC_CADEIA_AJUDA</option><option value="NC_CADEIA_ACIONADA">NC_CADEIA_ACIONADA</option></select></div>
+        </div>
+        <button id="buscarHistorico156" type="button">Consultar histórico</button>
+        <div id="avisoHistorico156" class="notice" role="status" aria-live="polite">Utilize os filtros e clique em Consultar histórico.</div>
+        <div id="listaHistorico156" style="display:grid;gap:12px;margin-top:16px"></div>
+      </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.55</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.56</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -756,10 +768,12 @@
       document.getElementById('painelAditivos').hidden=aba!=='aditivos';
       document.getElementById('painelInjetoras').hidden=aba!=='injetoras';
       document.getElementById('painelDosadores').hidden=aba!=='dosadores';
+      document.getElementById('painelHistorico156').hidden=aba!=='historico';
       document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
       document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
       document.getElementById('abaInjetoras').classList.toggle('ativo',aba==='injetoras');
       document.getElementById('abaDosadores').classList.toggle('ativo',aba==='dosadores');
+      document.getElementById('abaHistorico156').classList.toggle('ativo',aba==='historico');
       if(aba==='aditivos') carregarAditivos148();
       if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
       if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
@@ -768,6 +782,40 @@
     document.getElementById('abaAditivos').addEventListener('click',()=>alternarGestao148('aditivos'));
     document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
     document.getElementById('abaDosadores').addEventListener('click',()=>alternarGestao148('dosadores'));
+    document.getElementById('abaHistorico156').addEventListener('click',()=>alternarGestao148('historico'));
+    document.getElementById('buscarHistorico156').addEventListener('click',async function(){
+      const botao=this,aviso=document.getElementById('avisoHistorico156'),lista=document.getElementById('listaHistorico156');
+      botao.disabled=true;aviso.textContent='Consultando registros...';lista.replaceChildren();
+      try{
+        const r=await requisicao({acao:'listarHistorico156',token:tokenSessao,
+          op:document.getElementById('filtroOp156').value.trim(),
+          produto:document.getElementById('filtroProduto156').value.trim(),
+          status:document.getElementById('filtroStatus156').value});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha na consulta.');
+        aviso.textContent=r.totalEncontrado+' registro(s) encontrado(s). Exibindo até 100 mais recentes.'+
+          (r.limiteBase?' Pesquisa limitada às últimas 5.000 aplicações; refine os filtros se necessário.':'');
+        r.registros.forEach(reg=>{
+          const caixa=document.createElement('div');caixa.className='resultado';
+          const titulo=document.createElement('h4');titulo.textContent='OP '+reg.op+' | '+reg.produto+' | '+reg.status;
+          const detalhes=document.createElement('p');detalhes.style.textAlign='left';
+          detalhes.textContent=reg.dataHora+' | Injetora: '+reg.injetora+' | Dosador: '+reg.dosador+
+            ' | Responsável: '+reg.responsavel+' | Master previsto: '+reg.masterEstrutura+
+            '% | Real informado: '+reg.masterReal+'% | Caixas: '+reg.caixas+
+            ' | Frascos/caixa: '+reg.frascosCaixa;
+          const historico=document.createElement('div');
+          const subtitulo=document.createElement('strong');subtitulo.textContent='Contraprovas:';
+          historico.appendChild(subtitulo);
+          if(!reg.contraprovas.length){const vazio=document.createElement('p');vazio.textContent='Nenhuma contraprova encontrada.';historico.appendChild(vazio);}
+          reg.contraprovas.forEach((c,i)=>{const linha=document.createElement('p');linha.style.textAlign='left';
+            linha.textContent=(i+1)+'ª — '+c.dataHora+' | Real '+c.real+'% | Contraprova '+c.contraprova+
+              '% | '+c.status+' | '+c.responsavel;historico.appendChild(linha);});
+          const envio=document.createElement('p');envio.style.textAlign='left';
+          envio.textContent=reg.envioConfirmado?'Cadeia de Ajuda: envio confirmado pelo operador.':'Cadeia de Ajuda: sem confirmação de envio registrada.';
+          caixa.append(titulo,detalhes,historico,envio);lista.appendChild(caixa);
+        });
+      }catch(e){aviso.textContent=e.message;}
+      finally{botao.disabled=false;}
+    });
     function limparFormularioInjetora149() {
       document.getElementById('formInjetora').reset();
       document.getElementById('idInjetoraEdicao').value='';
