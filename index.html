@@ -17,7 +17,7 @@
     .notice.error{background:#fff0f0;color:#a21c27}.notice.ok{background:#eef7f1;color:#236d43}
     footer{text-align:center;font-size:12px;color:#86909b;margin-top:24px}.waves{position:fixed;left:0;right:0;bottom:0;height:110px;background:#d22934;clip-path:polygon(0 62%,15% 48%,32% 65%,52% 35%,75% 62%,100% 25%,100% 100%,0 100%);opacity:.9}.waves:after{content:'';position:absolute;inset:22px 0 0;background:#a7abb1;clip-path:polygon(0 65%,22% 45%,46% 70%,73% 35%,100% 60%,100% 100%,0 100%)}
     body.inicio main{width:min(100%,780px)}
-    body.gestao main{width:min(100%,940px)}
+    body.gestao main{width:min(100%,1200px)}
     .acoes-importar{display:flex;gap:12px;flex-wrap:wrap}.acoes-importar button{flex:1}.tabela-previa{width:100%;border-collapse:collapse;font-size:12px}.tabela-previa th,.tabela-previa td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left}.tabela-previa th{background:#f2f4f7}.arquivo{border:1px dashed #bfc8d4;border-radius:9px;padding:15px;background:#fafbfd}.secundario{background:#eef0f3;color:#3b4755}
     .painel-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:18px 0 8px;flex-wrap:wrap}
     .painel-topo p{text-align:left;margin:4px 0}.relogio{font-size:14px;font-weight:700;color:#465365;text-align:right}
@@ -38,6 +38,15 @@
     .modal-botoes{display:flex;gap:12px}.modal-botoes button{flex:1}
     .abas-gestao{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.abas-gestao button{width:auto;margin:0;padding:12px 16px;background:#e9edf2;color:#263449}.abas-gestao button.ativo{background:#245d98;color:white}
     #dosador150{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px;background:#fff} .grade-aditivo{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grade-aditivo label{margin-top:10px}.grade-aditivo select{width:100%;padding:13px;border:1px solid #d1d8e1;border-radius:9px}
+    .dash-filtros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end;background:#f7f9fc;padding:16px;border-radius:12px}
+    .dash-filtros label{margin:0 0 6px}.dash-filtros input,.dash-filtros select{width:100%;padding:11px;border:1px solid #d1d8e1;border-radius:8px;background:white}
+    .dash-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.dash-acoes button{width:auto;margin:0;padding:11px 16px}
+    .dash-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+    .dash-card{border:1px solid #e2e7ed;border-radius:12px;padding:18px;background:#fff}.dash-card small{color:#64748b;display:block;font-size:12px}.dash-card strong{display:block;font-size:23px;margin:9px 0 0}.dash-card.verde strong{color:#22834c}.dash-card.vermelho strong{color:#c12c38}
+    .dash-tabela{overflow-x:auto;margin:12px 0 24px}.dash-tabela table{width:100%;border-collapse:collapse;font-size:12px}.dash-tabela th,.dash-tabela td{padding:10px;border-bottom:1px solid #e7ebef;text-align:left;white-space:nowrap}.dash-tabela th{background:#f2f5f9}.dash-tabela tr.clicavel{cursor:pointer}.dash-tabela tr.clicavel:hover{background:#fff5f5}
+    .dash-detalhe{padding:16px;border:1px solid #dce2e9;border-radius:12px;background:#fbfcfe;margin:12px 0}.dash-detalhe h4{margin:0 0 8px}.dash-detalhe button{width:auto;margin:8px 0}
+    @media(max-width:750px){.dash-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:460px){.dash-cards{grid-template-columns:1fr}}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
   </style>
 </head>
@@ -144,8 +153,28 @@
     </section>
     <section id="telaGestao" hidden>
       <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaImportacao" class="ativo" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
-      <div id="painelImportacao">
+      <div class="abas-gestao"><button id="abaPainel157" class="ativo" type="button">Painel Geral</button><button id="abaRegistros157" type="button">Registros</button><button id="abaImportacao" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
+      <div id="painelGeral157">
+        <h3>Painel Geral — Consumo estimado de materiais</h3>
+        <div class="dash-filtros">
+          <div><label for="dataInicio157">Data inicial</label><input type="date" id="dataInicio157"></div>
+          <div><label for="dataFim157">Data final</label><input type="date" id="dataFim157"></div>
+          <div><label for="injetoraFiltro157">Injetora</label><select id="injetoraFiltro157"><option value="">Todas</option></select></div>
+          <div><label for="statusFiltro157">Status</label><select id="statusFiltro157"><option value="">Todos</option><option value="CONFORME">Conforme</option><option value="NC_RECALIBRAGEM">Não conforme — recalibragem</option><option value="NC_CADEIA_AJUDA">Cadeia de ajuda</option><option value="NC_CADEIA_ACIONADA">Cadeia acionada</option></select></div>
+        </div>
+        <div class="dash-acoes"><button id="consultarPainel157" type="button">Consultar</button><button id="atualizarPainel157" class="secundario" type="button">Atualizar</button><button id="exportarPainel157" class="secundario" type="button">Exportar Excel</button></div>
+        <div id="avisoPainel157" class="notice" role="status" aria-live="polite">Carregando indicadores...</div>
+        <div class="dash-cards" id="cardsPainel157"></div>
+        <h3>Resultado por injetora</h3><div class="dash-tabela"><table><thead><tr><th>Injetora</th><th>Produção (kg)</th><th>Master economizado</th><th>Master adicional</th><th>Saldo Master</th><th>OPs</th></tr></thead><tbody id="tabelaInjetoras157"></tbody></table></div>
+        <h3>Resultado por código de Master</h3><p style="text-align:left">Clique em um Master para visualizar as OPs relacionadas.</p>
+        <div class="dash-tabela"><table><thead><tr><th>Código</th><th>Descrição</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Saldo (kg)</th><th>OPs</th></tr></thead><tbody id="tabelaMasters157"></tbody></table></div>
+        <div id="detalheMaster157" class="dash-detalhe" hidden></div>
+        <h3>Últimos 10 registros</h3><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Status</th></tr></thead><tbody id="tabelaRecentes157"></tbody></table></div>
+        <button id="verTodos157" type="button" class="secundario">Ver todos os registros</button>
+        <p style="text-align:left;font-size:12px">Estimativa: a última contraprova é aplicada à quantidade total registrada. Não representa consumo físico medido.</p>
+      </div>
+      <div id="painelRegistros157" hidden><h3>Registros de aplicações</h3><p style="text-align:left">Registros do período e filtros selecionados.</p><div id="avisoRegistros157" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Produção (kg)</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Status</th></tr></thead><tbody id="tabelaRegistros157"></tbody></table></div><button id="abrirHistorico157" type="button" class="secundario">Consultar contraprovas por OP</button></div>
+      <div id="painelImportacao" hidden>
       <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
       <label for="arquivoEstrutura">Arquivo de estrutura (.xlsx)</label>
@@ -215,7 +244,7 @@
       </div>
       <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.56</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.57</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -705,6 +734,8 @@
       telaInicial.hidden = true;
       telaGestao.hidden = false;
       document.body.classList.add('gestao');
+      alternarGestao148('painel');
+      inicializarPainel157();
     });
     document.getElementById('voltarGestao').addEventListener('click', function() {
       telaGestao.hidden = true;
@@ -763,7 +794,80 @@
         sim.addEventListener('click',aceitar);nao.addEventListener('click',cancelar);nao.focus();
       });
     }
+
+    // Etapa 1.57: Painel de Gestão (somente leitura).
+    let dadosPainel157=null;
+    function numero157(v){return Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function dataLocal157(d){const a=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dia=String(d.getDate()).padStart(2,'0');return `${a}-${m}-${dia}`;}
+    function inicializarPainel157(){
+      const hoje=new Date();document.getElementById('dataInicio157').value=dataLocal157(new Date(hoje.getFullYear(),hoje.getMonth(),1));
+      document.getElementById('dataFim157').value=dataLocal157(hoje);
+      document.getElementById('injetoraFiltro157').value='';document.getElementById('statusFiltro157').value='';
+      dadosPainel157=null;consultarPainel157();
+    }
+    function td157(tr,valor){const td=document.createElement('td');td.textContent=String(valor==null?'—':valor);tr.appendChild(td);return td;}
+    function preencherTabela157(id,linhas){const corpo=document.getElementById(id);corpo.replaceChildren();if(!linhas.length){const tr=document.createElement('tr');const td=td157(tr,'Nenhum registro encontrado.');td.colSpan=9;corpo.appendChild(tr);}else linhas.forEach(tr=>corpo.appendChild(tr));}
+    function linha157(valores){const tr=document.createElement('tr');valores.forEach(v=>td157(tr,v));return tr;}
+    async function consultarPainel157(){
+      const aviso=document.getElementById('avisoPainel157'),consultar=document.getElementById('consultarPainel157');
+      consultar.disabled=true;aviso.textContent='Consultando dados e calculando indicadores...';aviso.className='notice';
+      try{
+        const inicio=document.getElementById('dataInicio157').value,fim=document.getElementById('dataFim157').value;
+        if(!inicio||!fim||inicio>fim)throw new Error('Selecione um período válido.');
+        const r=await requisicao({acao:'painelGeral157',token:tokenSessao,inicio,fim,
+          injetora:document.getElementById('injetoraFiltro157').value,status:document.getElementById('statusFiltro157').value});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao consultar o painel.');
+        dadosPainel157=r;renderizarPainel157();
+        aviso.textContent=`${r.resumo.aplicacoes} aplicação(ões) no período.`+(r.resumo.semCalculo?` ${r.resumo.semCalculo} sem cálculo por dados inválidos.`:'')+(r.baseParcial?' Atenção: base parcial devido ao limite de leitura.':'');
+      }catch(e){aviso.textContent=e.message||'Erro ao consultar.';aviso.className='notice error';}
+      finally{consultar.disabled=false;}
+    }
+    function renderizarPainel157(){
+      const r=dadosPainel157,z=r.resumo,cards=document.getElementById('cardsPainel157');cards.replaceChildren();
+      const itens=[['Produção considerada',numero157(z.producaoKg)+' kg',''],['Master economizado',numero157(z.masterEconomiaKg)+' kg','verde'],['Master adicional',numero157(z.masterAdicionalKg)+' kg','vermelho'],['Resina economizada',numero157(z.resinaEconomiaKg)+' kg','verde'],['Resina adicional',numero157(z.resinaAdicionalKg)+' kg','vermelho'],['Saldo de Master',numero157(z.saldoMasterKg)+' kg',z.saldoMasterKg>=0?'verde':'vermelho'],['Conformidade',numero157(z.conformidadePercentual)+'%',''],['Aplicações',String(z.aplicacoes),'']];
+      itens.forEach(([titulo,valor,classe])=>{const box=document.createElement('div');box.className='dash-card '+classe;const l=document.createElement('small');l.textContent=titulo;const v=document.createElement('strong');v.textContent=valor;box.append(l,v);cards.appendChild(box);});
+      preencherTabela157('tabelaInjetoras157',r.injetoras.map(x=>linha157([x.codigo,numero157(x.producaoKg),numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops])));
+      preencherTabela157('tabelaMasters157',r.masters.map(x=>{const tr=linha157([x.codigo,x.descricao,numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops]);tr.className='clicavel';tr.tabIndex=0;tr.addEventListener('click',()=>detalharMaster157(x));tr.addEventListener('keydown',e=>{if(e.key==='Enter')detalharMaster157(x);});return tr;}));
+      preencherTabela157('tabelaRecentes157',r.registrosRecentes.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,Number.isFinite(x.masterEstrutura)?numero157(x.masterEstrutura)+'%':'—',x.ultimaContraprova==null?'—':numero157(x.ultimaContraprova)+'%',x.status])));
+      document.getElementById('detalheMaster157').hidden=true;
+      const sel=document.getElementById('injetoraFiltro157'),atual=sel.value,nomes=[...new Set(r.injetoras.map(x=>x.codigo))];
+      // Não apagar opções de outros filtros após uma consulta filtrada.
+      nomes.forEach(nome=>{if(![...sel.options].some(o=>o.value===nome)){const opt=document.createElement('option');opt.value=nome;opt.textContent=nome;sel.appendChild(opt);}});
+      sel.value=atual;
+    }
+    function detalharMaster157(master){
+      const box=document.getElementById('detalheMaster157');box.replaceChildren();box.hidden=false;
+      const titulo=document.createElement('h4');titulo.textContent=`Master ${master.codigo} — ${master.descricao}`;box.appendChild(titulo);
+      const ops=new Set();(dadosPainel157.registros||[]).forEach(x=>{if(master.ops&&x.op)ops.add(x.op);});
+      const p=document.createElement('p');p.style.textAlign='left';p.textContent='Para consultar as OPs e contraprovas desse Master, abra o histórico e filtre pela OP. A vinculação detalhada por componente será concluída na próxima atualização.';box.appendChild(p);
+      const b=document.createElement('button');b.className='secundario';b.textContent='Abrir histórico de aplicações';b.addEventListener('click',()=>alternarGestao148('historico'));box.appendChild(b);
+    }
+    function renderizarRegistros157(){const r=dadosPainel157;if(!r){document.getElementById('avisoRegistros157').textContent='Abra o Painel Geral para carregar os dados.';return;}
+      document.getElementById('avisoRegistros157').textContent=`Exibindo ${r.registros.length} registros`+(r.limiteRegistros?' (limite de 1.000; refine o período).':'.');
+      preencherTabela157('tabelaRegistros157',r.registros.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,x.producaoKg==null?'—':numero157(x.producaoKg),x.economiaKg==null?'—':numero157(x.economiaKg),x.adicionalKg==null?'—':numero157(x.adicionalKg),x.status])));
+    }
+    function exportarExcel157(){
+      if(!dadosPainel157){document.getElementById('avisoPainel157').textContent='Consulte os dados antes de exportar.';return;}
+      if(typeof XLSX==='undefined'){document.getElementById('avisoPainel157').textContent='Biblioteca Excel indisponível. Verifique sua conexão.';return;}
+      const r=dadosPainel157,wb=XLSX.utils.book_new();
+      const adicionar=(nome,cab,linhas)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([cab,...linhas]),nome);
+      adicionar('Resumo',['Indicador','Valor','Unidade'],Object.entries(r.resumo).map(([k,v])=>[k,v,k==='conformidadePercentual'?'%':k==='aplicacoes'||k==='conformes'||k==='semCalculo'?'registros':'kg']));
+      adicionar('Injetoras',['Injetora','Produção kg','Economia Master kg','Master adicional kg','Saldo kg','OPs'],r.injetoras.map(x=>[x.codigo,x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]));
+      adicionar('Masters',['Código','Descrição','Produção ponderada kg','Economia Master kg','Master adicional kg','Saldo kg','OPs'],r.masters.map(x=>[x.codigo,x.descricao,x.producaoKg,x.economiaKg,x.adicionalKg,x.saldoKg,x.ops]));
+      adicionar('Aplicações',['Data','OP','Produto','Injetora','Status','Estrutura %','Última contraprova %','Produção kg','Economia kg','Adicional kg'],r.registros.map(x=>[x.dataHora,x.op,x.produto,x.injetora,x.status,x.masterEstrutura,x.ultimaContraprova,x.producaoKg,x.economiaKg,x.adicionalKg]));
+      XLSX.writeFile(wb,`SPILTAG_Painel_${r.periodo.inicio}_${r.periodo.fim}.xlsx`);
+    }
+    document.getElementById('consultarPainel157').addEventListener('click',consultarPainel157);
+    document.getElementById('atualizarPainel157').addEventListener('click',consultarPainel157);
+    document.getElementById('exportarPainel157').addEventListener('click',exportarExcel157);
+    document.getElementById('verTodos157').addEventListener('click',()=>{alternarGestao148('registros');renderizarRegistros157();});
+    document.getElementById('abrirHistorico157').addEventListener('click',()=>alternarGestao148('historico'));
+
     function alternarGestao148(aba){
+      document.getElementById('painelGeral157').hidden=aba!=='painel';
+      document.getElementById('painelRegistros157').hidden=aba!=='registros';
+      document.getElementById('abaPainel157').classList.toggle('ativo',aba==='painel');
+      document.getElementById('abaRegistros157').classList.toggle('ativo',aba==='registros');
       document.getElementById('painelImportacao').hidden=aba!=='importacao';
       document.getElementById('painelAditivos').hidden=aba!=='aditivos';
       document.getElementById('painelInjetoras').hidden=aba!=='injetoras';
@@ -778,6 +882,8 @@
       if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
       if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
     }
+    document.getElementById('abaPainel157').addEventListener('click',()=>{alternarGestao148('painel');if(!dadosPainel157) consultarPainel157();});
+    document.getElementById('abaRegistros157').addEventListener('click',()=>{alternarGestao148('registros');renderizarRegistros157();});
     document.getElementById('abaImportacao').addEventListener('click',()=>alternarGestao148('importacao'));
     document.getElementById('abaAditivos').addEventListener('click',()=>alternarGestao148('aditivos'));
     document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
