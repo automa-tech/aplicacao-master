@@ -160,7 +160,7 @@
           <div><label for="dataInicio157">Data inicial</label><input type="date" id="dataInicio157"></div>
           <div><label for="dataFim157">Data final</label><input type="date" id="dataFim157"></div>
           <div><label for="injetoraFiltro157">Injetora</label><select id="injetoraFiltro157"><option value="">Todas</option></select></div>
-          <div><label for="statusFiltro157">Status</label><select id="statusFiltro157"><option value="">Todos</option><option value="CONFORME">Conforme</option><option value="NC_RECALIBRAGEM">Não conforme — recalibragem</option><option value="NC_CADEIA_AJUDA">Cadeia de ajuda</option><option value="NC_CADEIA_ACIONADA">Cadeia acionada</option></select></div>
+          <div><label for="statusFiltro157">Status</label><select id="statusFiltro157"><option value="">Todos</option><option value="CONFORME">Conforme</option><option value="NAO_CONFORME">Não conforme</option></select></div>
         </div>
         <div class="dash-acoes"><button id="consultarPainel157" type="button">Consultar</button><button id="atualizarPainel157" class="secundario" type="button">Atualizar</button><button id="exportarPainel157" class="secundario" type="button">Exportar Excel</button></div>
         <div id="avisoPainel157" class="notice" role="status" aria-live="polite">Carregando indicadores...</div>
@@ -236,7 +236,7 @@
         <div class="grade-aditivo">
           <div><label for="filtroOp156">OP</label><input id="filtroOp156" autocomplete="off" placeholder="Todas as OPs"></div>
           <div><label for="filtroProduto156">Produto</label><input id="filtroProduto156" autocomplete="off" placeholder="Todos os produtos"></div>
-          <div><label for="filtroStatus156">Status</label><select id="filtroStatus156"><option value="">Todos</option><option value="CONFORME">CONFORME</option><option value="NC_RECALIBRAGEM">NC_RECALIBRAGEM</option><option value="NC_CADEIA_AJUDA">NC_CADEIA_AJUDA</option><option value="NC_CADEIA_ACIONADA">NC_CADEIA_ACIONADA</option></select></div>
+          <div><label for="filtroStatus156">Status</label><select id="filtroStatus156"><option value="">Todos</option><option value="CONFORME">CONFORME</option><option value="NAO_CONFORME">Não conforme</option></select></div>
         </div>
         <button id="buscarHistorico156" type="button">Consultar histórico</button>
         <div id="avisoHistorico156" class="notice" role="status" aria-live="polite">Utilize os filtros e clique em Consultar histórico.</div>
@@ -835,12 +835,40 @@
       nomes.forEach(nome=>{if(![...sel.options].some(o=>o.value===nome)){const opt=document.createElement('option');opt.value=nome;opt.textContent=nome;sel.appendChild(opt);}});
       sel.value=atual;
     }
-    function detalharMaster157(master){
+    async function detalharMaster157(master){
       const box=document.getElementById('detalheMaster157');box.replaceChildren();box.hidden=false;
       const titulo=document.createElement('h4');titulo.textContent=`Master ${master.codigo} — ${master.descricao}`;box.appendChild(titulo);
-      const ops=new Set();(dadosPainel157.registros||[]).forEach(x=>{if(master.ops&&x.op)ops.add(x.op);});
-      const p=document.createElement('p');p.style.textAlign='left';p.textContent='Para consultar as OPs e contraprovas desse Master, abra o histórico e filtre pela OP. A vinculação detalhada por componente será concluída na próxima atualização.';box.appendChild(p);
-      const b=document.createElement('button');b.className='secundario';b.textContent='Abrir histórico de aplicações';b.addEventListener('click',()=>alternarGestao148('historico'));box.appendChild(b);
+      const aviso=document.createElement('p');aviso.textContent='Carregando OPs e contraprovas...';box.appendChild(aviso);
+      try{
+        const r=await requisicao({acao:'detalharMaster158',token:tokenSessao,codigo:master.codigo,
+          inicio:document.getElementById('dataInicio157').value,fim:document.getElementById('dataFim157').value,
+          injetora:document.getElementById('injetoraFiltro157').value,status:document.getElementById('statusFiltro157').value});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha ao consultar o Master.');
+        aviso.textContent=`${r.total} aplicação(ões) encontrada(s).`+(r.limitado?' Exibindo as 500 mais recentes.':'')+(r.baseParcial?' Atenção: base parcial.':'');
+        if(!r.registros.length)return;
+        const area=document.createElement('div');area.className='dash-tabela';
+        const table=document.createElement('table'),thead=document.createElement('thead'),head=document.createElement('tr');
+        ['Data','OP','Produto','Injetora','Produção (kg)','Estrutura (%)','Última contraprova (%)','Economia (kg)','Adicional (kg)','Status','Detalhes'].forEach(x=>{const th=document.createElement('th');th.textContent=x;head.appendChild(th);});
+        thead.appendChild(head);table.appendChild(thead);
+        const tbody=document.createElement('tbody');
+        r.registros.forEach(reg=>{
+          const tr=linha157([reg.dataHora,reg.op,reg.produto,reg.injetora,reg.producaoKg==null?'—':numero157(reg.producaoKg),
+            reg.masterEstrutura==null?'—':numero157(reg.masterEstrutura),reg.ultimaContraprova==null?'—':numero157(reg.ultimaContraprova),
+            reg.economiaKg==null?'—':numero157(reg.economiaKg),reg.adicionalKg==null?'—':numero157(reg.adicionalKg),reg.status]);
+          const cel=document.createElement('td'),btn=document.createElement('button');btn.type='button';btn.className='secundario';btn.textContent='Contraprovas';
+          btn.style.cssText='width:auto;margin:0;padding:6px 10px';
+          cel.appendChild(btn);tr.appendChild(cel);tbody.appendChild(tr);
+          const detalhes=document.createElement('tr');detalhes.hidden=true;
+          const td=document.createElement('td');td.colSpan=11;
+          if(!reg.contraprovas.length){td.textContent='Nenhuma contraprova encontrada.';}
+          else reg.contraprovas.forEach((c,i)=>{
+            const p=document.createElement('p');p.style.textAlign='left';p.textContent=`${i+1}ª — ${c.dataHora} | Dosador: ${c.dosador} | Real: ${c.real==null?'—':numero157(c.real)+'%'} | Contraprova: ${c.contraprova==null?'—':numero157(c.contraprova)+'%'} | Responsável: ${c.responsavel} | ${c.status}`;td.appendChild(p);
+          });
+          detalhes.appendChild(td);tbody.appendChild(detalhes);
+          btn.addEventListener('click',()=>{detalhes.hidden=!detalhes.hidden;btn.textContent=detalhes.hidden?'Contraprovas':'Ocultar';});
+        });
+        table.appendChild(tbody);area.appendChild(table);box.appendChild(area);
+      }catch(e){aviso.textContent=e.message||'Falha na consulta.';}
     }
     function renderizarRegistros157(){const r=dadosPainel157;if(!r){document.getElementById('avisoRegistros157').textContent='Abra o Painel Geral para carregar os dados.';return;}
       document.getElementById('avisoRegistros157').textContent=`Exibindo ${r.registros.length} registros`+(r.limiteRegistros?' (limite de 1.000; refine o período).':'.');
