@@ -48,6 +48,12 @@
     @media(max-width:750px){.dash-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:460px){.dash-cards{grid-template-columns:1fr}}
     [hidden]{display:none!important}.welcome{font-weight:700;color:#253044}.menu{display:grid;gap:12px;margin-top:24px}.menu button{margin:0}.menu .producao{background:#27844e}.menu .gestao{background:#245c91}.menu button:disabled{opacity:.5}.menu .sair{background:#f4f5f7;color:#4a5667}
+    /* Gestão > Usuários: linhas e ações compactas, sem afetar outros botões */
+    .tabela-usuarios-compacta{font-size:12px}
+    .tabela-usuarios-compacta th,.tabela-usuarios-compacta td{padding:7px 9px;vertical-align:middle;line-height:1.3}
+    .tabela-usuarios-compacta th:last-child,.tabela-usuarios-compacta td:last-child{width:220px}
+    .acoes-usuarios-compactas{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .tabela-usuarios-compacta .acoes-usuarios-compactas button{width:auto!important;min-width:0!important;max-width:none!important;display:inline-flex;align-items:center;justify-content:center;margin:0!important;padding:6px 10px!important;font-size:12px!important;font-weight:600;line-height:1.2;border-radius:6px;white-space:nowrap;flex:0 0 auto}
   </style>
 </head>
 <body>
@@ -253,7 +259,7 @@
           <div><button id="salvarUsuario160" type="submit">Cadastrar usuário</button></div>
         </form>
         <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
-        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <div class="resultado" style="overflow-x:auto"><table class="tabela-previa tabela-usuarios-compacta"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
         <form id="formRedefinir162" hidden autocomplete="off" style="border:1px solid #dce2e9;border-radius:12px;padding:16px;margin:12px 0">
           <h3>Alterar senha de usuário</h3>
           <p id="alvoSenha162"></p>
@@ -1050,6 +1056,7 @@
             const td=document.createElement('td');td.textContent=String(valor);tr.appendChild(td);
           });
           const celula=document.createElement('td');
+          const acoes=document.createElement('div');acoes.className='acoes-usuarios-compactas';
           const botao=document.createElement('button');
           botao.type='button';botao.className='secundario';
           botao.textContent=u.ativo?'Desativar':'Ativar';
@@ -1066,7 +1073,7 @@
           });
           const botaoSenha=document.createElement('button');
           botaoSenha.type='button';botaoSenha.className='secundario';
-          botaoSenha.textContent='Alterar senha';botaoSenha.style.marginLeft='8px';
+          botaoSenha.textContent='Alterar senha';
           botaoSenha.addEventListener('click',()=>{
             const painel=document.getElementById('formRedefinir162');
             painel.dataset.matricula=u.matricula;
@@ -1074,8 +1081,8 @@
             painel.reset();painel.hidden=false;
             document.getElementById('novaSenhaGestao162').focus();
           });
-          celula.appendChild(botaoSenha);
-          celula.appendChild(botao);tr.appendChild(celula);tbody.appendChild(tr);
+          acoes.appendChild(botaoSenha);
+          acoes.appendChild(botao);celula.appendChild(acoes);tr.appendChild(celula);tbody.appendChild(tr);
         });
         aviso.textContent=(r.usuarios||[]).length+' usuário(s) cadastrado(s).';
       }catch(e){aviso.textContent=e.message||'Falha ao consultar usuários.';}
