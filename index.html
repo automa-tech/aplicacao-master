@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1b30">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png" type="image/png">
   <title>SPILTAG | Sistema de Aplicação de Master</title>
   <script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
@@ -62,7 +66,7 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
 .gestao-shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
 .gestao-sidebar{background:linear-gradient(165deg,#0b1b30,#142c47 70%,#101d31);color:#f4f7fc;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:5px 0 18px #12243c12}
 .gestao-brand{padding:25px 22px 18px;border-bottom:1px solid #ffffff1a;min-height:110px}
-.gestao-brand img{max-width:170px;max-height:56px;object-fit:contain;display:block;filter:brightness(0) invert(1)}
+.gestao-brand img{max-width:170px;max-height:56px;object-fit:contain;display:block;filter:none}
 .gestao-brand small{display:block;color:#a6b9d0;letter-spacing:1.6px;font-size:10px;margin-top:12px}
 .gestao-sidebar .abas-gestao{display:flex;flex-direction:column;flex-wrap:nowrap;gap:3px;margin:0;padding:12px 10px 24px}
 .gestao-sidebar .nav-label{font-size:10px;letter-spacing:1.3px;color:#9eafc3;font-weight:700;margin:21px 12px 8px;border-bottom:1px solid #ffffff20;padding-bottom:8px}
@@ -101,6 +105,23 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
 @media(max-width:1050px){.gestao-shell{grid-template-columns:210px minmax(0,1fr)}.gestao-content{padding:20px}.gestao-content .dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.gestao-topbar-title{font-size:17px}}
 @media(max-width:720px){.gestao-shell{display:block}.gestao-sidebar{height:auto;min-height:0;position:relative}.gestao-brand{min-height:0;padding:14px 18px}.gestao-brand img{max-height:34px}.gestao-brand small,.gestao-sidebar-bottom,.gestao-sidebar .nav-label{display:none}.gestao-sidebar .abas-gestao{flex-direction:row;overflow-x:auto;padding:10px;gap:5px}.gestao-sidebar .abas-gestao button{flex:0 0 auto;width:auto;padding:9px 12px;white-space:nowrap}.gestao-topbar{padding:14px 18px;min-height:70px}.gestao-topbar-right,.gestao-topbar-icon{display:none}.gestao-content{padding:15px}.gestao-content .dash-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.gestao-content .dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.gestao-content .dash-filtros,.gestao-content .dash-cards{grid-template-columns:1fr}}
+
+/* Etapa 1.72 — identidade, navegação, imagem industrial e PWA */
+.gestao-brand img{width:auto;max-width:185px;max-height:76px;filter:none!important;object-fit:contain;object-position:left center}
+.gestao-sidebar-bottom{padding:12px 12px 20px;display:flex;flex-direction:column;gap:14px}
+.gestao-sidebar-bottom .gestao-voltar{display:flex;align-items:center;justify-content:flex-start;width:100%;margin:0;padding:13px 14px;border:1px solid #ffffff38;background:#ffffff12;color:#fff;font-size:13px;border-radius:9px;cursor:pointer}
+.gestao-sidebar-bottom .gestao-voltar:hover{background:#ffffff25}
+.gestao-sidebar-bottom>span{padding:0 8px}
+.acoes-registros172{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+.gestao-content .acoes-registros172 button{width:auto;margin:0;padding:11px 17px;font-size:13px}
+body:not(.gestao){background:#0b223c url('fundo-spiltag.png') center center / cover fixed no-repeat}
+body:not(.gestao)>.waves{display:none!important}
+body:not(.gestao)>main{box-shadow:0 20px 70px #0007;background:#fffffff5;backdrop-filter:blur(5px)}
+body:not(.gestao) main .brand img{max-width:220px;max-height:90px}
+body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
+#instalarApp172{width:auto;margin:12px auto 0;display:block;padding:10px 18px;font-size:13px;background:#163653}
+#instalarApp172[hidden]{display:none!important}
+@media(max-width:720px){.gestao-sidebar-bottom{padding:8px 12px 12px}.gestao-sidebar-bottom .gestao-voltar{justify-content:center}.gestao-sidebar-bottom>span{display:none}.gestao-brand img{max-height:52px!important}}
   </style>
 </head>
 <body>
@@ -147,6 +168,7 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
           GESTÃO<small>Importação da estrutura Protheus disponível<br>Outros módulos em desenvolvimento</small>
         </button>
       </div>
+      <button id="instalarApp172" type="button" hidden>Instalar aplicativo no computador</button>
       <div class="notice" id="avisoPainel" role="status">Painel inicial disponível. As operações serão ativadas nas próximas etapas.</div>
       <div class="linha-acoes"><button id="sair" type="button">Sair do sistema</button></div>
     </section>
@@ -218,7 +240,7 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
     </section>
     <section id="telaGestao" hidden>
       <div class="gestao-shell"><aside class="gestao-sidebar"><div class="gestao-brand"><img src="logo-spiltag.png" alt="Spiltag"><small>CONTROLE DE MASTER</small></div><nav class="abas-gestao" aria-label="Menu da Gestão">
- <div class="nav-label">VISÃO GERAL</div><button id="abaPainel157" class="ativo" type="button"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel geral</span></button><div class="nav-label">OPERAÇÃO</div><button id="abaRegistros157" type="button"><span class="nav-symbol" aria-hidden="true">▤</span><span>Registros de aplicação</span></button><button id="abaHistorico156" type="button"><span class="nav-symbol" aria-hidden="true">◷</span><span>Consultas e contraprovas</span></button><div class="nav-label">IMPORTAÇÃO</div><button id="abaImportacao" type="button"><span class="nav-symbol" aria-hidden="true">⇧</span><span>Importar estruturas</span></button><div class="nav-label">CADASTROS</div><button id="abaInjetoras" type="button"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Injetoras</span></button><button id="abaAditivos" type="button"><span class="nav-symbol" aria-hidden="true">◈</span><span>Aditivos</span></button><button id="abaDosadores" type="button"><span class="nav-symbol" aria-hidden="true">▣</span><span>Dosadores</span></button><div class="nav-label">ADMINISTRAÇÃO</div><button id="abaUsuarios160" type="button"><span class="nav-symbol" aria-hidden="true">♙</span><span>Usuários e auditoria</span></button></nav><div class="gestao-sidebar-bottom"><span>SPILTAG • SISTEMA INTERNO</span></div></aside><div class="gestao-workspace"><div class="gestao-topbar"><div class="gestao-topbar-icon">▦</div><div><div class="gestao-topbar-title">Sistema de Aplicação de Master</div><div class="gestao-topbar-subtitle" id="gestaoTituloSecao">Painel de Gestão</div></div><div class="gestao-topbar-right"><span class="gestao-status"><span class="bolinha online"></span> Sistema interno</span><span class="gestao-perfil">GESTÃO</span></div></div><div class="gestao-content">
+ <div class="nav-label">VISÃO GERAL</div><button id="abaPainel157" class="ativo" type="button"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel geral</span></button><div class="nav-label">OPERAÇÃO</div><button id="abaRegistros157" type="button"><span class="nav-symbol" aria-hidden="true">▤</span><span>Registros de aplicação</span></button><button id="abaHistorico156" type="button"><span class="nav-symbol" aria-hidden="true">◷</span><span>Consultas e contraprovas</span></button><div class="nav-label">IMPORTAÇÃO</div><button id="abaImportacao" type="button"><span class="nav-symbol" aria-hidden="true">⇧</span><span>Importar estruturas</span></button><div class="nav-label">CADASTROS</div><button id="abaInjetoras" type="button"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Injetoras</span></button><button id="abaAditivos" type="button"><span class="nav-symbol" aria-hidden="true">◈</span><span>Aditivos</span></button><button id="abaDosadores" type="button"><span class="nav-symbol" aria-hidden="true">▣</span><span>Dosadores</span></button><div class="nav-label">ADMINISTRAÇÃO</div><button id="abaUsuarios160" type="button"><span class="nav-symbol" aria-hidden="true">♙</span><span>Usuários e auditoria</span></button></nav><div class="gestao-sidebar-bottom"><button id="voltarGestao" class="gestao-voltar" type="button">⌂ &nbsp; Voltar ao início</button><span>SPILTAG • SISTEMA INTERNO</span></div></aside><div class="gestao-workspace"><div class="gestao-topbar"><div class="gestao-topbar-icon">▦</div><div><div class="gestao-topbar-title">Sistema de Aplicação de Master</div><div class="gestao-topbar-subtitle" id="gestaoTituloSecao">Painel de Gestão</div></div><div class="gestao-topbar-right"><span class="gestao-status"><span class="bolinha online"></span> Sistema interno</span><span class="gestao-perfil">GESTÃO</span></div></div><div class="gestao-content">
       <div id="painelGeral157">
         <h3>Painel Geral — Consumo estimado de materiais</h3>
         <div class="dash-filtros">
@@ -238,7 +260,7 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
         <button id="verTodos157" type="button" class="secundario">Ver todos os registros</button>
         <p style="text-align:left;font-size:12px">Estimativa: a última contraprova é aplicada à quantidade total registrada. Não representa consumo físico medido.</p>
       </div>
-      <div id="painelRegistros157" hidden><h3>Registros de aplicações</h3><p style="text-align:left">Registros do período e filtros selecionados.</p><div id="avisoRegistros157" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Produção (kg)</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Status</th></tr></thead><tbody id="tabelaRegistros157"></tbody></table></div><button id="abrirHistorico157" type="button" class="secundario">Consultar contraprovas por OP</button></div>
+      <div id="painelRegistros157" hidden><h3>Registros de aplicações</h3><p style="text-align:left">Registros do período e filtros selecionados.</p><div id="avisoRegistros157" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Produção (kg)</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Status</th></tr></thead><tbody id="tabelaRegistros157"></tbody></table></div><div class="acoes-registros172"><button id="abrirHistorico157" type="button" class="secundario">Consultar contraprovas por OP</button><button id="exportarRegistros172" type="button">Exportar relatório Excel</button></div></div>
       <div id="painelImportacao" hidden>
       <h3>Importação de estruturas</h3>
       <p style="text-align:left">Selecione o Excel exportado do Protheus. Confira a prévia antes de substituir a base atual.</p>
@@ -359,9 +381,9 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
         <div id="avisoHistorico156" class="notice" role="status" aria-live="polite">Utilize os filtros e clique em Consultar histórico.</div>
         <div id="listaHistorico156" style="display:grid;gap:12px;margin-top:16px"></div>
       </div>
-      <button id="voltarGestao" type="button" class="secundario">Voltar ao início</button>
+
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.60</footer>
+    <footer>SPILTAG • Sistema interno • Etapa 1.72</footer>
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -387,6 +409,20 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
   <div class="waves" aria-hidden="true"></div>
   <script>
     'use strict';
+    // Instalação opcional: disponível em navegadores compatíveis.
+    let eventoInstalacao172=null;
+    const instalarApp172=document.getElementById('instalarApp172');
+    window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();eventoInstalacao172=e;instalarApp172.hidden=false;});
+    instalarApp172.addEventListener('click',async function(){
+      if(!eventoInstalacao172)return;
+      const evento=eventoInstalacao172;eventoInstalacao172=null;instalarApp172.hidden=true;
+      try{await evento.prompt();await evento.userChoice;}catch(e){}
+    });
+    window.addEventListener('appinstalled',()=>{eventoInstalacao172=null;instalarApp172.hidden=true;});
+    if('serviceWorker' in navigator && location.protocol==='https:')window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+    });
+
     const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwpcNkv_I7vU3gf7vCI_t6H6sJr62SCRUnc6vTwnaglpHH2uuj-NDYnDseFs8sEd7H45A/exec';
     const form = document.getElementById('login');
     const matricula = document.getElementById('matricula');
@@ -1096,6 +1132,22 @@ body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>
     document.getElementById('consultarPainel157').addEventListener('click',consultarPainel157);
     document.getElementById('atualizarPainel157').addEventListener('click',consultarPainel157);
     document.getElementById('exportarPainel157').addEventListener('click',exportarExcel157);
+    document.getElementById('exportarRegistros172').addEventListener('click',function(){
+      const aviso=document.getElementById('avisoRegistros157');
+      const r=dadosPainel157;
+      if(!r){aviso.className='notice error';aviso.textContent='Consulte o Painel Geral antes de exportar.';return;}
+      if(!r.registros || !r.registros.length){aviso.className='notice error';aviso.textContent='Não há registros para exportar.';return;}
+      if(r.baseParcial||r.limiteRegistros){aviso.className='notice error';aviso.textContent='Existem registros fora do limite da consulta. Reduza o período ou os filtros para gerar um relatório completo.';return;}
+      if(typeof XLSX==='undefined'){aviso.className='notice error';aviso.textContent='Biblioteca Excel indisponível. Verifique a conexão.';return;}
+      const linhas=r.registros.map(x=>[x.dataHora,String(x.op),String(x.produto),String(x.injetora),x.producaoKg,x.economiaKg,x.adicionalKg,x.status,x.masterEstrutura,x.ultimaContraprova]);
+      const ws=XLSX.utils.aoa_to_sheet([['Data/hora','OP','Produto','Injetora','Produção (kg)','Economia (kg)','Adicional (kg)','Status','Master estrutura (%)','Última contraprova (%)'],...linhas]);
+      ws['!cols']=[{wch:23},{wch:22},{wch:24},{wch:16},{wch:20},{wch:20},{wch:20},{wch:22},{wch:24},{wch:27}];
+      ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:linhas.length,c:9}})};
+      for(let i=1;i<=linhas.length;i++)for(const j of [4,5,6,8,9]){const cel=ws[XLSX.utils.encode_cell({r:i,c:j})];if(cel&&cel.t==='n')cel.z=j>=8?'0.00"%"':'#,##0.00';}
+      const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Registros');
+      try{XLSX.writeFile(wb,`SPILTAG_Registros_${r.periodo.inicio}_a_${r.periodo.fim}.xlsx`);aviso.className='notice ok';aviso.textContent='Relatório Excel gerado com os registros consultados.';}
+      catch(e){aviso.className='notice error';aviso.textContent='Não foi possível gerar o Excel.';}
+    });
     document.getElementById('verTodos157').addEventListener('click',()=>{alternarGestao148('registros');renderizarRegistros157();});
     document.getElementById('abrirHistorico157').addEventListener('click',()=>alternarGestao148('historico'));
 
