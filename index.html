@@ -54,6 +54,53 @@
     .tabela-usuarios-compacta th:last-child,.tabela-usuarios-compacta td:last-child{width:220px}
     .acoes-usuarios-compactas{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
     .tabela-usuarios-compacta .acoes-usuarios-compactas button{width:auto!important;min-width:0!important;max-width:none!important;display:inline-flex;align-items:center;justify-content:center;margin:0!important;padding:6px 10px!important;font-size:12px!important;font-weight:600;line-height:1.2;border-radius:6px;white-space:nowrap;flex:0 0 auto}
+
+/* ETAPA 1.71 — Gestão redesenhada, sem alterar a lógica de negócio */
+body.gestao{display:block;padding:0;align-items:stretch;justify-content:stretch;background:#edf2f8}
+body.gestao>main{width:100%;max-width:none;min-height:100vh;padding:0;border-radius:0;box-shadow:none;background:transparent}
+body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>.waves{display:none}
+.gestao-shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+.gestao-sidebar{background:linear-gradient(165deg,#0b1b30,#142c47 70%,#101d31);color:#f4f7fc;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:5px 0 18px #12243c12}
+.gestao-brand{padding:25px 22px 18px;border-bottom:1px solid #ffffff1a;min-height:110px}
+.gestao-brand img{max-width:170px;max-height:56px;object-fit:contain;display:block;filter:brightness(0) invert(1)}
+.gestao-brand small{display:block;color:#a6b9d0;letter-spacing:1.6px;font-size:10px;margin-top:12px}
+.gestao-sidebar .abas-gestao{display:flex;flex-direction:column;flex-wrap:nowrap;gap:3px;margin:0;padding:12px 10px 24px}
+.gestao-sidebar .nav-label{font-size:10px;letter-spacing:1.3px;color:#9eafc3;font-weight:700;margin:21px 12px 8px;border-bottom:1px solid #ffffff20;padding-bottom:8px}
+.gestao-sidebar .abas-gestao button{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:12px 13px;border-radius:9px;background:transparent;color:#d9e4f2;font-size:13px;font-weight:500;text-align:left;min-height:43px}
+.gestao-sidebar .abas-gestao button:hover{background:#ffffff15;color:white}
+.gestao-sidebar .abas-gestao button.ativo{background:linear-gradient(95deg,#c80d20,#a9081b);color:white;box-shadow:0 4px 12px #0002;font-weight:700}
+.gestao-sidebar .nav-symbol{font-size:21px;width:23px;text-align:center;line-height:1}
+.gestao-sidebar-bottom{margin-top:auto;padding:20px;color:#8296ae;font-size:10px;letter-spacing:.6px}
+.gestao-workspace{min-width:0}
+.gestao-topbar{background:white;min-height:88px;padding:16px 30px;display:flex;align-items:center;gap:15px;box-shadow:0 2px 10px #102b4c0b;border-bottom:1px solid #e6ebf3}
+.gestao-topbar-icon{background:#edf3fa;color:#17375e;border-radius:12px;padding:13px;font-size:22px}
+.gestao-topbar-title{font-size:21px;color:#14233b;font-weight:800;letter-spacing:-.5px}
+.gestao-topbar-subtitle{font-size:13px;color:#758399;margin-top:3px}
+.gestao-topbar-right{margin-left:auto;display:flex;align-items:center;gap:15px;color:#62758d;font-size:12px}
+.gestao-status{display:flex;align-items:center;gap:7px}.gestao-perfil{background:#f5e9eb;color:#a7192a;border-radius:20px;padding:8px 12px;font-weight:800;letter-spacing:.5px}
+.gestao-content{padding:25px 30px 45px;max-width:1800px;margin:auto}
+.gestao-content>div:not([hidden])>h3:first-child{font-size:20px;margin:4px 0 16px;color:#14253f}
+.gestao-content h3{color:#192b46;font-size:17px;margin:24px 0 12px}
+.gestao-content .dash-filtros{background:white;border:1px solid #e3eaf2;border-radius:15px;box-shadow:0 4px 18px #1d355209;padding:18px;gap:15px}
+.gestao-content .dash-acoes{justify-content:flex-end;margin:12px 0}
+.gestao-content .dash-acoes button,.gestao-content>div>button{width:auto;margin:4px 0;padding:10px 16px;font-size:13px}
+.gestao-content .dash-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.gestao-content .dash-card{min-height:120px;border:1px solid #e3eaf2;border-left:4px solid #2062c5;border-radius:14px;box-shadow:0 5px 18px #1d35520b;padding:20px}
+.gestao-content .dash-card.verde{border-left-color:#19a35c}.gestao-content .dash-card.vermelho{border-left-color:#df3345}
+.gestao-content .dash-card strong{font-size:26px;color:#1a2b45}
+.gestao-content .dash-card.verde strong{color:#12844c}.gestao-content .dash-card.vermelho strong{color:#c52337}
+.gestao-content .dash-tabela,.gestao-content .resultado{background:white;border:1px solid #e1e8f0;border-radius:13px;box-shadow:0 4px 16px #1d35520a;overflow-x:auto}
+.gestao-content .dash-tabela th,.gestao-content .tabela-previa th{background:#eef3f9;color:#31435c;font-size:11px;font-weight:800}
+.gestao-content .dash-tabela th,.gestao-content .dash-tabela td{padding:10px 12px}
+.gestao-content .dash-tabela tr:hover td{background:#f6f9fd}
+.gestao-content .tabela-previa td{padding:8px 10px}
+.gestao-content button{transition:background .16s,box-shadow .16s,transform .16s}
+.gestao-content button:focus-visible,.gestao-sidebar button:focus-visible{outline:3px solid #4b9bff;outline-offset:2px}
+.gestao-content .notice{text-align:left;border:1px solid #e4eaf2}
+.gestao-content #voltarGestao{margin-top:25px;width:auto;padding:10px 18px}
+@media(max-width:1050px){.gestao-shell{grid-template-columns:210px minmax(0,1fr)}.gestao-content{padding:20px}.gestao-content .dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.gestao-topbar-title{font-size:17px}}
+@media(max-width:720px){.gestao-shell{display:block}.gestao-sidebar{height:auto;min-height:0;position:relative}.gestao-brand{min-height:0;padding:14px 18px}.gestao-brand img{max-height:34px}.gestao-brand small,.gestao-sidebar-bottom,.gestao-sidebar .nav-label{display:none}.gestao-sidebar .abas-gestao{flex-direction:row;overflow-x:auto;padding:10px;gap:5px}.gestao-sidebar .abas-gestao button{flex:0 0 auto;width:auto;padding:9px 12px;white-space:nowrap}.gestao-topbar{padding:14px 18px;min-height:70px}.gestao-topbar-right,.gestao-topbar-icon{display:none}.gestao-content{padding:15px}.gestao-content .dash-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.gestao-content .dash-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.gestao-content .dash-filtros,.gestao-content .dash-cards{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -170,8 +217,8 @@
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
     <section id="telaGestao" hidden>
-      <h2 style="font-size:20px;margin-top:24px">GESTÃO</h2>
-      <div class="abas-gestao"><button id="abaPainel157" class="ativo" type="button">Painel Geral</button><button id="abaRegistros157" type="button">Registros</button><button id="abaImportacao" type="button">Importação de estruturas</button><button id="abaAditivos" type="button">Cadastro de aditivos</button><button id="abaInjetoras" type="button">Cadastro de injetoras</button><button id="abaDosadores" type="button">Cadastro de dosadores</button><button id="abaUsuarios160" type="button">Usuários</button><button id="abaHistorico156" type="button">Histórico de aplicações</button></div>
+      <div class="gestao-shell"><aside class="gestao-sidebar"><div class="gestao-brand"><img src="logo-spiltag.png" alt="Spiltag"><small>CONTROLE DE MASTER</small></div><nav class="abas-gestao" aria-label="Menu da Gestão">
+ <div class="nav-label">VISÃO GERAL</div><button id="abaPainel157" class="ativo" type="button"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel geral</span></button><div class="nav-label">OPERAÇÃO</div><button id="abaRegistros157" type="button"><span class="nav-symbol" aria-hidden="true">▤</span><span>Registros de aplicação</span></button><button id="abaHistorico156" type="button"><span class="nav-symbol" aria-hidden="true">◷</span><span>Consultas e contraprovas</span></button><div class="nav-label">IMPORTAÇÃO</div><button id="abaImportacao" type="button"><span class="nav-symbol" aria-hidden="true">⇧</span><span>Importar estruturas</span></button><div class="nav-label">CADASTROS</div><button id="abaInjetoras" type="button"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Injetoras</span></button><button id="abaAditivos" type="button"><span class="nav-symbol" aria-hidden="true">◈</span><span>Aditivos</span></button><button id="abaDosadores" type="button"><span class="nav-symbol" aria-hidden="true">▣</span><span>Dosadores</span></button><div class="nav-label">ADMINISTRAÇÃO</div><button id="abaUsuarios160" type="button"><span class="nav-symbol" aria-hidden="true">♙</span><span>Usuários e auditoria</span></button></nav><div class="gestao-sidebar-bottom"><span>SPILTAG • SISTEMA INTERNO</span></div></aside><div class="gestao-workspace"><div class="gestao-topbar"><div class="gestao-topbar-icon">▦</div><div><div class="gestao-topbar-title">Sistema de Aplicação de Master</div><div class="gestao-topbar-subtitle" id="gestaoTituloSecao">Painel de Gestão</div></div><div class="gestao-topbar-right"><span class="gestao-status"><span class="bolinha online"></span> Sistema interno</span><span class="gestao-perfil">GESTÃO</span></div></div><div class="gestao-content">
       <div id="painelGeral157">
         <h3>Painel Geral — Consumo estimado de materiais</h3>
         <div class="dash-filtros">
@@ -1053,6 +1100,8 @@
     document.getElementById('abrirHistorico157').addEventListener('click',()=>alternarGestao148('historico'));
 
     function alternarGestao148(aba){
+      const titulos={painel:'Painel de Gestão',registros:'Registros de aplicação',importacao:'Importação de estruturas',aditivos:'Cadastro de aditivos',injetoras:'Cadastro de injetoras',dosadores:'Cadastro de dosadores',usuarios:'Usuários e auditoria',historico:'Consultas e contraprovas'};
+      document.getElementById('gestaoTituloSecao').textContent=titulos[aba]||'Painel de Gestão';
       document.getElementById('painelGeral157').hidden=aba!=='painel';
       document.getElementById('painelRegistros157').hidden=aba!=='registros';
       document.getElementById('abaPainel157').classList.toggle('ativo',aba==='painel');
