@@ -260,6 +260,24 @@
         </form>
         <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa tabela-usuarios-compacta"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
+        <section id="auditoriaUsuarios165" style="margin-top:18px">
+          <h3>Histórico de alterações de usuários</h3>
+          <div class="grade-aditivo">
+            <div><label for="matriculaAuditoria165">Filtrar por matrícula</label><input id="matriculaAuditoria165" maxlength="20" inputmode="numeric" placeholder="Todas"></div>
+            <div><label for="tipoAuditoria165">Evento</label><select id="tipoAuditoria165">
+              <option value="">Todos</option><option value="USUARIO">Usuários</option><option value="SENHA">Senhas</option>
+            </select></div>
+          </div>
+          <div class="acoes-usuarios-compactas" style="margin:10px 0">
+            <button id="consultarAuditoria165" type="button" class="secundario">Consultar histórico</button>
+            <button id="maisAuditoria165" type="button" class="secundario" hidden>Carregar anteriores</button>
+          </div>
+          <div id="avisoAuditoria165" class="notice" role="status" aria-live="polite">Clique em Consultar histórico.</div>
+          <div class="resultado" style="overflow-x:auto">
+            <table class="tabela-previa tabela-usuarios-compacta"><thead><tr><th>Data/hora</th><th>Responsável</th><th>Evento</th><th>Detalhes</th></tr></thead>
+              <tbody id="linhasAuditoria165"></tbody></table>
+          </div>
+        </section>
         <form id="formEditarUsuario164" hidden autocomplete="off" style="border:1px solid #dce2e9;border-radius:12px;padding:16px;margin:12px 0">
           <h3>Editar usuário</h3>
           <p id="alvoEditar164"></p>
@@ -1119,6 +1137,39 @@
         aviso.textContent=(r.usuarios||[]).length+' usuário(s) cadastrado(s).';
       }catch(e){aviso.textContent=e.message||'Falha ao consultar usuários.';}
     }
+    let paginaAuditoria165=0;
+    let filtrosAuditoria165={matricula:'',tipo:''};
+    async function consultarAuditoria165(mais=false){
+      const aviso=document.getElementById('avisoAuditoria165');
+      const corpo=document.getElementById('linhasAuditoria165');
+      const botao=document.getElementById('consultarAuditoria165');
+      const proximo=document.getElementById('maisAuditoria165');
+      if(!mais){
+        paginaAuditoria165=0;
+        filtrosAuditoria165={matricula:document.getElementById('matriculaAuditoria165').value.trim(),
+          tipo:document.getElementById('tipoAuditoria165').value};
+        corpo.replaceChildren();
+      }
+      botao.disabled=true;proximo.disabled=true;aviso.textContent='Consultando histórico...';
+      try{
+        const r=await requisicao({acao:'listarAuditoriaUsuarios165',token:tokenSessao,
+          pagina:paginaAuditoria165,matricula:filtrosAuditoria165.matricula,tipo:filtrosAuditoria165.tipo});
+        if(!r.sucesso)throw new Error(r.mensagem||'Falha na consulta.');
+        (r.registros||[]).forEach(reg=>{
+          const tr=document.createElement('tr');
+          [reg.dataHora,reg.responsavel,reg.acao,reg.detalhes].forEach(v=>{
+            const td=document.createElement('td');td.textContent=String(v||'');tr.appendChild(td);
+          });
+          corpo.appendChild(tr);
+        });
+        paginaAuditoria165++;
+        proximo.hidden=!r.temMais;
+        aviso.textContent=corpo.children.length+' registro(s) exibido(s).';
+      }catch(e){aviso.textContent=e.message||'Erro na consulta.';}
+      finally{botao.disabled=false;proximo.disabled=false;}
+    }
+    document.getElementById('consultarAuditoria165').addEventListener('click',()=>consultarAuditoria165(false));
+    document.getElementById('maisAuditoria165').addEventListener('click',()=>consultarAuditoria165(true));
     document.getElementById('cancelarEditar164').addEventListener('click',()=>{
       const f=document.getElementById('formEditarUsuario164');f.reset();f.hidden=true;
     });
