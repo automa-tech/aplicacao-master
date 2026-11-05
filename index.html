@@ -122,6 +122,13 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
 #instalarApp172{width:auto;margin:12px auto 0;display:block;padding:10px 18px;font-size:13px;background:#163653}
 #instalarApp172[hidden]{display:none!important}
 @media(max-width:720px){.gestao-sidebar-bottom{padding:8px 12px 12px}.gestao-sidebar-bottom .gestao-voltar{justify-content:center}.gestao-sidebar-bottom>span{display:none}.gestao-brand img{max-height:52px!important}}
+/* Etapa 1.73 — refinamento visual */
+.gestao-brand{background:#fff;border-bottom:1px solid #dce3ec;padding:20px 22px 16px}
+.gestao-brand small{color:#40546b}
+.gestao-sidebar .gestao-brand img{max-width:185px;max-height:76px}
+body:not(.gestao) main>footer{display:none}
+.cartao small{display:none}
+@media(max-width:720px){.gestao-brand{background:#fff}}
   </style>
 </head>
 <body>
@@ -162,10 +169,10 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       </div>
       <div class="cards">
         <button id="botaoProducao" class="cartao producao" type="button">
-          PRODUÇÃO<small>Aplicação de Master e contraprovas<br>Registro inicial de aplicação</small>
+          PRODUÇÃO
         </button>
         <button id="botaoGestao" class="cartao gestao" type="button" hidden>
-          GESTÃO<small>Importação da estrutura Protheus disponível<br>Outros módulos em desenvolvimento</small>
+          GESTÃO
         </button>
       </div>
       <button id="instalarApp172" type="button" hidden>Instalar aplicativo no computador</button>
@@ -195,8 +202,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           <div class="campo-grupo">
             <div><label for="dosador150">Dosador</label><select id="dosador150" required><option value="">Selecione o dosador</option></select></div>
             <div><label for="responsavel150">Responsável</label><input id="responsavel150" required maxlength="100" placeholder="Nome do responsável"></div>
-            <div><label for="real150">Master real aplicado (%)</label><input id="real150" required inputmode="decimal" placeholder="Ex.: 3,50"></div>
-            <div><label for="contra150">Contraprova inicial (%)</label><input id="contra150" required inputmode="decimal" placeholder="Ex.: 3,45"></div>
+            <div><label for="real150">Master real aplicado (%)</label><input id="real150" required inputmode="decimal"></div>
+            <div><label for="contra150">Contraprova inicial (%)</label><input id="contra150" required inputmode="decimal"></div>
           </div>
           <div id="previa150" class="notice">Informe o percentual real e a contraprova para visualizar a faixa de tolerância relativa de ±5% (valor configurado no servidor).</div>
           <button id="salvarAplicacao150" type="submit">Registrar aplicação</button>
@@ -215,7 +222,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
             <label for="responsavelContraprova152">Responsável pela nova contraprova</label>
             <input id="responsavelContraprova152" maxlength="100" autocomplete="off" placeholder="Informe o responsável">
             <label for="novaContraprova152">Nova contraprova (%)</label>
-            <input id="novaContraprova152" inputmode="decimal" autocomplete="off" placeholder="Ex.: 3,45">
+            <input id="novaContraprova152" inputmode="decimal" autocomplete="off">
             <button id="validarContraprova152" type="button">Validar nova contraprova</button>
           </div>
           <div id="blocoCadeia152" hidden>
@@ -279,7 +286,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         <h3>Cadastro manual de aditivos</h3>
         <p style="text-align:left">Os códigos ativos serão identificados automaticamente nas estruturas, sem alterar o percentual importado.</p>
         <form id="formAditivo"><div class="grade-aditivo">
-          <div><label for="codigoAditivo">Código do componente</label><input id="codigoAditivo" required maxlength="20" pattern="[0-9]{1,20}" placeholder="Ex.: 0020400"></div>
+          <div><label for="codigoAditivo">Código do componente</label><input id="codigoAditivo" required maxlength="20" pattern="[0-9]{1,20}"></div>
           <div><label for="classeAditivo">Classificação</label><select id="classeAditivo" required><option value="" selected disabled>Selecione a classificação</option><option value="BIO">BIO</option><option value="UV">UV</option><option value="OUTRO">OUTRO</option></select></div>
           <div><label for="descricaoAditivo">Descrição</label><input id="descricaoAditivo" required maxlength="200" placeholder="Descrição do aditivo"></div>
           <div><label for="ativoAditivo">Situação</label><select id="ativoAditivo" required><option value="" selected disabled>Selecione a situação</option><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div>
