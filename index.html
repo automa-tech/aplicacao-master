@@ -314,7 +314,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         <div id="avisoDosador151" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Dosador</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDosadores151"></tbody></table></div>
       </div>
-      <div id="painelConfig173" hidden><h3>Tolerância geral</h3><label for="tol173">Tolerância relativa (%)</label><input id="tol173" type="number" min="0" max="100" step="0.01" style="max-width:220px"><button id="salvarTol173" type="button">Salvar tolerância</button><h3>Destinatários da Cadeia de Ajuda</h3><form id="formDest173" class="grade-aditivo"><input id="idDest173" type="hidden"><div><label>Nome</label><input id="nomeDest173" required maxlength="100"></div><div><label>Setor</label><input id="setorDest173" required maxlength="100"></div><div><label>E-mail</label><input id="emailDest173" type="email" required maxlength="254"></div><div><label>Situação</label><select id="ativoDest173"><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div><button type="submit">Salvar destinatário</button></form><div id="avisoConfig173" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Nome</th><th>Setor</th><th>E-mail</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDest173"></tbody></table></div></div><div id="painelUsuarios160" hidden>
+      <div id="painelConfig173" hidden><h3>Tolerância geral</h3><label for="tol173">Tolerância relativa (%)</label><input id="tol173" type="number" min="0" max="100" step="0.01" style="max-width:220px"><button id="salvarTol173" type="button">Salvar tolerância</button><h3>Destinatários da Cadeia de Ajuda</h3><form id="formDest173" class="grade-aditivo"><input id="idDest173" type="hidden"><div><label>Nome</label><input id="nomeDest173" required maxlength="100"></div><div><label>Setor</label><input id="setorDest173" required maxlength="100"></div><div><label>E-mail</label><input id="emailDest173" type="email" required maxlength="254"></div><div><label>Situação</label><select id="ativoDest173"><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div><button type="submit">Salvar destinatário</button></form><div id="avisoConfig173" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Nome</th><th>Setor</th><th>E-mail</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDest173"></tbody></table></div></div><div id="painelUsuarios160" hidden><section id="permissoes174" hidden style="margin-bottom:18px;padding:14px;border:1px solid #dce2e9;border-radius:12px"><h3>Permissões de gerenciamento de usuários</h3><p>Somente a matrícula 00001 pode autorizar outros gestores.</p><div class="grade-aditivo"><div><label for="matriculaPerm174">Matrícula do gestor</label><input id="matriculaPerm174" inputmode="numeric" maxlength="20"></div><div><label for="autorizarPerm174">Permissão</label><select id="autorizarPerm174"><option value="SIM">Autorizar</option><option value="NAO">Revogar</option></select></div></div><button type="button" id="salvarPerm174">Salvar permissão</button><div class="notice" id="avisoPerm174"></div><div id="listaPerm174"></div></section>
         <h3>Usuários — Cadastro de acessos</h3>
         <p style="text-align:left">Somente Gestão. Matrículas existentes não podem ser cadastradas novamente.</p>
         <form id="formUsuarios160" class="grade-aditivo" autocomplete="off">
@@ -327,7 +327,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         <div id="avisoUsuarios160" class="notice" role="status" aria-live="polite">Consulte ou cadastre usuários.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa tabela-usuarios-compacta"><thead><tr><th>Matrícula</th><th>Nome</th><th>Perfil</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaUsuarios160"></tbody></table></div>
         <section id="auditoriaUsuarios165" style="margin-top:18px">
-          <h3>Histórico de alterações de usuários</h3>
+          <h3>Histórico de alterações de usuários</h3><p>Registros anteriores a 90 dias podem ser movidos para AUDITORIA_ARQUIVO, sem perda do histórico.</p><button id="arquivarAuditoria174" type="button" class="secundario" hidden>Arquivar registros antigos (90 dias)</button>
           <div class="grade-aditivo">
             <div><label for="matriculaAuditoria165">Filtrar por matrícula</label><input id="matriculaAuditoria165" maxlength="20" inputmode="numeric" placeholder="Todas"></div>
             <div><label for="tipoAuditoria165">Evento</label><select id="tipoAuditoria165">
@@ -1174,7 +1174,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       document.getElementById('abaUsuarios160').classList.toggle('ativo',aba==='usuarios');
       if(aba==='aditivos') carregarAditivos148();
       if(aba==='injetoras') { limparFormularioInjetora149(); carregarInjetoras149(); }
-      if(aba==='usuarios') carregarUsuarios160();
+      if(aba==='usuarios') {carregarUsuarios160();carregarPermissoes174();}
       if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
     }
 
@@ -1190,6 +1190,41 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     document.getElementById('abaInjetoras').addEventListener('click',()=>alternarGestao148('injetoras'));
     document.getElementById('abaDosadores').addEventListener('click',()=>alternarGestao148('dosadores'));
     document.getElementById('abaHistorico156').addEventListener('click',()=>alternarGestao148('historico'));
+
+    function confirmarAcao174(pergunta){
+      return new Promise(resolve=>{
+        const aviso=document.getElementById('avisoUsuarios160');aviso.replaceChildren();
+        const txt=document.createElement('span');txt.textContent=pergunta+' ';
+        const sim=document.createElement('button'),nao=document.createElement('button');
+        sim.type=nao.type='button';sim.textContent='Confirmar';nao.textContent='Cancelar';nao.className='secundario';
+        const concluir=v=>{aviso.textContent='';resolve(v);};
+        sim.addEventListener('click',()=>concluir(true),{once:true});nao.addEventListener('click',()=>concluir(false),{once:true});
+        aviso.append(txt,sim,nao);
+      });
+    }
+    async function carregarPermissoes174(){
+      const painel=document.getElementById('permissoes174'),arquivar=document.getElementById('arquivarAuditoria174');
+      painel.hidden=true;arquivar.hidden=true;
+      try{const r=await requisicao({acao:'listarPermissoes174',token:tokenSessao});
+        if(!r.sucesso)return;
+        painel.hidden=false;arquivar.hidden=false;
+        document.getElementById('listaPerm174').textContent='Gestores autorizados: '+(r.delegados.length?r.delegados.join(', '):'nenhum');
+      }catch(e){}
+    }
+    document.getElementById('salvarPerm174').addEventListener('click',async()=>{
+      const b=document.getElementById('salvarPerm174'),aviso=document.getElementById('avisoPerm174');b.disabled=true;
+      try{const r=await requisicao({acao:'salvarPermissao174',token:tokenSessao,matricula:document.getElementById('matriculaPerm174').value.trim(),autorizar:document.getElementById('autorizarPerm174').value==='SIM'});
+        aviso.textContent=r.mensagem||'Concluído';if(r.sucesso)await carregarPermissoes174();
+      }catch(e){aviso.textContent=e.message;}finally{b.disabled=false;}
+    });
+    document.getElementById('arquivarAuditoria174').addEventListener('click',async()=>{
+      const b=document.getElementById('arquivarAuditoria174');
+      if(!await confirmarAcao174('Arquivar registros de auditoria com mais de 90 dias? Eles permanecerão em AUDITORIA_ARQUIVO.'))return;
+      b.disabled=true;try{const r=await requisicao({acao:'arquivarAuditoria174',token:tokenSessao});
+        document.getElementById('avisoAuditoria165').textContent=r.mensagem||'Concluído';
+        if(r.sucesso)consultarAuditoria165();
+      }catch(e){document.getElementById('avisoAuditoria165').textContent=e.message;}finally{b.disabled=false;}
+    });
     async function carregarUsuarios160(){
       const aviso=document.getElementById('avisoUsuarios160');
       const tbody=document.getElementById('listaUsuarios160');
@@ -1210,7 +1245,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
 
           botao.addEventListener('click',async()=>{
             const novaSituacao=!u.ativo;
-            if(!confirm((novaSituacao?'Ativar':'Desativar')+' o acesso de '+u.nome+' ('+u.matricula+')?'))return;
+            if(!await confirmarAcao174((novaSituacao?'Ativar':'Desativar')+' o acesso de '+u.nome+' ('+u.matricula+')?'))return;
             botao.disabled=true;aviso.textContent='Atualizando situação...';
             try{
               const resultado=await requisicao({acao:'alterarSituacaoUsuario161',token:tokenSessao,matricula:u.matricula,ativo:novaSituacao});
