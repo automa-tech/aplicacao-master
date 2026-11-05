@@ -65,7 +65,7 @@ body.gestao>main{width:100%;max-width:none;min-height:100vh;padding:0;border-rad
 body.gestao>main>.brand,body.gestao>main>h1,body.gestao>main>footer,body.gestao>.waves{display:none}
 .gestao-shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
 .gestao-sidebar{background:linear-gradient(165deg,#0b1b30,#142c47 70%,#101d31);color:#f4f7fc;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;box-shadow:5px 0 18px #12243c12}
-.gestao-brand{padding:25px 22px 18px;border-bottom:1px solid #ffffff1a;min-height:110px}
+.gestao-brand{background:#fff;padding:25px 22px 18px;border-bottom:1px solid #ffffff1a;min-height:110px}
 .gestao-brand img{max-width:170px;max-height:56px;object-fit:contain;display:block;filter:none}
 .gestao-brand small{display:block;color:#a6b9d0;letter-spacing:1.6px;font-size:10px;margin-top:12px}
 .gestao-sidebar .abas-gestao{display:flex;flex-direction:column;flex-wrap:nowrap;gap:3px;margin:0;padding:12px 10px 24px}
@@ -122,13 +122,6 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
 #instalarApp172{width:auto;margin:12px auto 0;display:block;padding:10px 18px;font-size:13px;background:#163653}
 #instalarApp172[hidden]{display:none!important}
 @media(max-width:720px){.gestao-sidebar-bottom{padding:8px 12px 12px}.gestao-sidebar-bottom .gestao-voltar{justify-content:center}.gestao-sidebar-bottom>span{display:none}.gestao-brand img{max-height:52px!important}}
-/* Etapa 1.73 — refinamento visual */
-.gestao-brand{background:#fff;border-bottom:1px solid #dce3ec;padding:20px 22px 16px}
-.gestao-brand small{color:#40546b}
-.gestao-sidebar .gestao-brand img{max-width:185px;max-height:76px}
-body:not(.gestao) main>footer{display:none}
-.cartao small{display:none}
-@media(max-width:720px){.gestao-brand{background:#fff}}
   </style>
 </head>
 <body>
@@ -176,7 +169,6 @@ body:not(.gestao) main>footer{display:none}
         </button>
       </div>
       <button id="instalarApp172" type="button" hidden>Instalar aplicativo no computador</button>
-      <div class="notice" id="avisoPainel" role="status">Painel inicial disponível. As operações serão ativadas nas próximas etapas.</div>
       <div class="linha-acoes"><button id="sair" type="button">Sair do sistema</button></div>
     </section>
     <section id="telaProducao" hidden>
@@ -218,9 +210,7 @@ body:not(.gestao) main>footer{display:none}
             <input id="responsavelRecalibragem152" maxlength="100" autocomplete="off" placeholder="Informe quem recalibrou o dosador">
             <button id="confirmarRecalibragem152" type="button">Confirmar recalibragem do dosador</button>
           </div>
-          <div id="blocoContraprova152" hidden>
-            <label for="responsavelContraprova152">Responsável pela nova contraprova</label>
-            <input id="responsavelContraprova152" maxlength="100" autocomplete="off" placeholder="Informe o responsável">
+          <div id="blocoContraprova152" hidden><input id="responsavelContraprova152" type="hidden">
             <label for="novaContraprova152">Nova contraprova (%)</label>
             <input id="novaContraprova152" inputmode="decimal" autocomplete="off">
             <button id="validarContraprova152" type="button">Validar nova contraprova</button>
@@ -247,7 +237,7 @@ body:not(.gestao) main>footer{display:none}
     </section>
     <section id="telaGestao" hidden>
       <div class="gestao-shell"><aside class="gestao-sidebar"><div class="gestao-brand"><img src="logo-spiltag.png" alt="Spiltag"></div><nav class="abas-gestao" aria-label="Menu da Gestão">
- <div class="nav-label">VISÃO GERAL</div><button id="abaPainel157" class="ativo" type="button"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel geral</span></button><div class="nav-label">OPERAÇÃO</div><button id="abaRegistros157" type="button"><span class="nav-symbol" aria-hidden="true">▤</span><span>Registros de aplicação</span></button><button id="abaHistorico156" type="button"><span class="nav-symbol" aria-hidden="true">◷</span><span>Consultas e contraprovas</span></button><div class="nav-label">IMPORTAÇÃO</div><button id="abaImportacao" type="button"><span class="nav-symbol" aria-hidden="true">⇧</span><span>Importar estruturas</span></button><div class="nav-label">CADASTROS</div><button id="abaInjetoras" type="button"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Injetoras</span></button><button id="abaAditivos" type="button"><span class="nav-symbol" aria-hidden="true">◈</span><span>Aditivos</span></button><button id="abaDosadores" type="button"><span class="nav-symbol" aria-hidden="true">▣</span><span>Dosadores</span></button><div class="nav-label">ADMINISTRAÇÃO</div><button id="abaUsuarios160" type="button"><span class="nav-symbol" aria-hidden="true">♙</span><span>Usuários e auditoria</span></button></nav><div class="gestao-sidebar-bottom"><button id="voltarGestao" class="gestao-voltar" type="button">⌂ &nbsp; Voltar ao início</button><span>SPILTAG • SISTEMA INTERNO</span></div></aside><div class="gestao-workspace"><div class="gestao-topbar"><div class="gestao-topbar-icon">▦</div><div><div class="gestao-topbar-title">Sistema de Aplicação de Master</div><div class="gestao-topbar-subtitle" id="gestaoTituloSecao">Painel de Gestão</div></div><div class="gestao-topbar-right"><span class="gestao-status"><span class="bolinha online"></span> Sistema interno</span><span class="gestao-perfil">GESTÃO</span></div></div><div class="gestao-content">
+ <div class="nav-label">VISÃO GERAL</div><button id="abaPainel157" class="ativo" type="button"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel geral</span></button><div class="nav-label">OPERAÇÃO</div><button id="abaRegistros157" type="button"><span class="nav-symbol" aria-hidden="true">▤</span><span>Registros de aplicação</span></button><button id="abaHistorico156" type="button"><span class="nav-symbol" aria-hidden="true">◷</span><span>Consultas e contraprovas</span></button><div class="nav-label">IMPORTAÇÃO</div><button id="abaImportacao" type="button"><span class="nav-symbol" aria-hidden="true">⇧</span><span>Importar estruturas</span></button><div class="nav-label">CADASTROS</div><button id="abaInjetoras" type="button"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Injetoras</span></button><button id="abaAditivos" type="button"><span class="nav-symbol" aria-hidden="true">◈</span><span>Aditivos</span></button><button id="abaDosadores" type="button"><span class="nav-symbol" aria-hidden="true">▣</span><span>Dosadores</span></button><button id="abaConfig173" type="button"><span class="nav-symbol">⚙</span><span>Tolerância e avisos</span></button><div class="nav-label">ADMINISTRAÇÃO</div><button id="abaUsuarios160" type="button"><span class="nav-symbol" aria-hidden="true">♙</span><span>Usuários e auditoria</span></button></nav><div class="gestao-sidebar-bottom"><button id="voltarGestao" class="gestao-voltar" type="button">⌂ &nbsp; Voltar ao início</button></div></aside><div class="gestao-workspace"><div class="gestao-topbar"><div class="gestao-topbar-icon">▦</div><div><div class="gestao-topbar-title">Sistema de Aplicação de Master</div><div class="gestao-topbar-subtitle" id="gestaoTituloSecao">Painel de Gestão</div></div><div class="gestao-topbar-right"><span class="gestao-status"><span class="bolinha online"></span> Sistema interno</span><span class="gestao-perfil">GESTÃO</span></div></div><div class="gestao-content">
       <div id="painelGeral157">
         <h3>Painel Geral — Consumo estimado de materiais</h3>
         <div class="dash-filtros">
@@ -263,7 +253,7 @@ body:not(.gestao) main>footer{display:none}
         <h3>Resultado por código de Master</h3><p style="text-align:left">Clique em um Master para visualizar as OPs relacionadas.</p>
         <div class="dash-tabela"><table><thead><tr><th>Código</th><th>Descrição</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Saldo (kg)</th><th>OPs</th></tr></thead><tbody id="tabelaMasters157"></tbody></table></div>
         <div id="detalheMaster157" class="dash-detalhe" hidden></div>
-        <h3>Últimos 10 registros</h3><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Status</th></tr></thead><tbody id="tabelaRecentes157"></tbody></table></div>
+        <h3>Últimos 10 registros</h3><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Master</th><th>Aditivo</th><th>Status</th></tr></thead><tbody id="tabelaRecentes157"></tbody></table></div>
         <button id="verTodos157" type="button" class="secundario">Ver todos os registros</button>
         <p style="text-align:left;font-size:12px">Estimativa: a última contraprova é aplicada à quantidade total registrada. Não representa consumo físico medido.</p>
       </div>
@@ -324,7 +314,7 @@ body:not(.gestao) main>footer{display:none}
         <div id="avisoDosador151" class="notice" role="status" aria-live="polite">Preencha os campos para cadastrar.</div>
         <div class="resultado" style="overflow-x:auto"><table class="tabela-previa"><thead><tr><th>Dosador</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDosadores151"></tbody></table></div>
       </div>
-      <div id="painelUsuarios160" hidden>
+      <div id="painelConfig173" hidden><h3>Tolerância geral</h3><label for="tol173">Tolerância relativa (%)</label><input id="tol173" type="number" min="0" max="100" step="0.01" style="max-width:220px"><button id="salvarTol173" type="button">Salvar tolerância</button><h3>Destinatários da Cadeia de Ajuda</h3><form id="formDest173" class="grade-aditivo"><input id="idDest173" type="hidden"><div><label>Nome</label><input id="nomeDest173" required maxlength="100"></div><div><label>Setor</label><input id="setorDest173" required maxlength="100"></div><div><label>E-mail</label><input id="emailDest173" type="email" required maxlength="254"></div><div><label>Situação</label><select id="ativoDest173"><option value="SIM">Ativo</option><option value="NAO">Inativo</option></select></div><button type="submit">Salvar destinatário</button></form><div id="avisoConfig173" class="notice"></div><div class="dash-tabela"><table><thead><tr><th>Nome</th><th>Setor</th><th>E-mail</th><th>Situação</th><th>Ação</th></tr></thead><tbody id="listaDest173"></tbody></table></div></div><div id="painelUsuarios160" hidden>
         <h3>Usuários — Cadastro de acessos</h3>
         <p style="text-align:left">Somente Gestão. Matrículas existentes não podem ser cadastradas novamente.</p>
         <form id="formUsuarios160" class="grade-aditivo" autocomplete="off">
@@ -390,7 +380,7 @@ body:not(.gestao) main>footer{display:none}
       </div>
 
     </section>
-    <footer>SPILTAG • Sistema interno • Etapa 1.72</footer>
+    
   </main>
   <div id="modalConfirmacao" class="modal-fundo" hidden role="dialog" aria-modal="true" aria-labelledby="tituloModal">
     <div class="modal-caixa"><h2 id="tituloModal">Confirmar importação</h2><p>Deseja substituir os dados de PRODUTOS e ESTRUTURAS por este Excel? Os aditivos serão preservados.</p>
@@ -480,20 +470,21 @@ body:not(.gestao) main>footer{display:none}
         document.getElementById('novaContraprova152').value='';
         idOcorrencia152=null;estadoOcorrencia152=null;
         document.getElementById('etiquetaOP').focus();
-        carregarPendentes153();
+        carregarPendentes153();ajustarPendentes173();
       } else if (resultadoPendente151 && resultadoPendente151.status==='NC_RECALIBRAGEM') {
         idOcorrencia152 = resultadoPendente151.idAplicacao;
         abrirPainelNC152('NC_RECALIBRAGEM');
-        carregarPendentes153();
+        carregarPendentes153();ajustarPendentes173();
       }
       if(resultadoPendente151 && resultadoPendente151.status==='NC_CADEIA_AJUDA') {
         abrirPainelNC152('NC_CADEIA_AJUDA');
+        document.getElementById('abrirEmail152').click();
       }
       resultadoPendente151=null;
     });
     function abrirPainelNC152(status) {
       const painel=document.getElementById('painelNC152');
-      painel.hidden=false;
+      painel.hidden=false;ajustarPendentes173();
       document.getElementById('blocoRecalibragem152').hidden=status!=='NC_RECALIBRAGEM';
       document.getElementById('blocoContraprova152').hidden=status!=='NC_RECALIBRADA';
       document.getElementById('blocoCadeia152').hidden=status!=='NC_CADEIA_AJUDA';
@@ -551,6 +542,7 @@ body:not(.gestao) main>footer{display:none}
         });
       }catch(e){aviso.textContent=e.message;}
     }
+    function ajustarPendentes173(){document.getElementById('secaoPendentes153').hidden=!document.getElementById('resultadoOP').hidden||!document.getElementById('painelNC152').hidden;}
     document.getElementById('atualizarPendentes153').addEventListener('click',carregarPendentes153);
     document.getElementById('confirmarRecalibragem152').addEventListener('click',async function() {
       if(trabalhandoNC152||!idOcorrencia152)return;
@@ -568,7 +560,7 @@ body:not(.gestao) main>footer{display:none}
     });
     document.getElementById('validarContraprova152').addEventListener('click',async function() {
       if(trabalhandoNC152||!idOcorrencia152)return;
-      const responsavel=document.getElementById('responsavelContraprova152').value.trim();
+      const responsavel=document.getElementById('responsavelRecalibragem152').value.trim();
       const contraprova=document.getElementById('novaContraprova152').value.trim();
       if(!responsavel||!contraprova){document.getElementById('statusNC152').textContent='Preencha responsável e nova contraprova.';return;}
       trabalhandoNC152=true;const btn=this;btn.disabled=true;
@@ -577,7 +569,7 @@ body:not(.gestao) main>footer{display:none}
           idAplicacao:idOcorrencia152,responsavel,contraprova,chaveRequisicao:crypto.randomUUID()});
         if(!r.sucesso)throw new Error(r.mensagem);
         await consultarEstado152(idOcorrencia152);
-        carregarPendentes153();
+        carregarPendentes153();ajustarPendentes173();
         avisoResultado151({status:r.status==='CONFORME'?'CONFORME':'NC_CADEIA_AJUDA',
           idAplicacao:idOcorrencia152,limiteMinimo:r.limiteMinimo,limiteMaximo:r.limiteMaximo});
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
@@ -614,7 +606,7 @@ body:not(.gestao) main>footer{display:none}
       idOcorrencia152=null;
       estadoOcorrencia152=null;
       document.getElementById('etiquetaOP').focus();
-      carregarPendentes153();
+      carregarPendentes153();ajustarPendentes173();
     }
     document.getElementById('abrirEmail152').addEventListener('click',async function(){
       if(!estadoOcorrencia152||estadoOcorrencia152.status!=='NC_CADEIA_AJUDA')return;
@@ -626,11 +618,11 @@ body:not(.gestao) main>footer{display:none}
           idAplicacao:estadoOcorrencia152.idAplicacao});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha ao preparar e-mail.');
         idEmailPreparado154=r.idAplicacao;
-        linkOutlook155='mailto:?subject='+encodeURIComponent(r.assunto)+'&body='+encodeURIComponent(r.corpo);
-        document.getElementById('passoOutlook155').hidden=false;
+        linkOutlook155='mailto:'+encodeURIComponent(r.destinatarios.join(';'))+'?subject='+encodeURIComponent(r.assunto)+'&body='+encodeURIComponent(r.corpo);
+        document.getElementById('passoOutlook155').hidden=true;
         document.getElementById('confirmarRetorno155').hidden=true;
         document.getElementById('statusNC152').textContent='E-mail preparado. Clique em Abrir Outlook.';
-        document.getElementById('abrirOutlook155').focus();
+        window.location.href=linkOutlook155;document.getElementById('confirmarRetorno155').click();
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
       finally{btn.disabled=false;}
     });
@@ -917,7 +909,7 @@ body:not(.gestao) main>footer{display:none}
       if (!tokenSessao) return;
       telaInicial.hidden = true;
       telaProducao.hidden = false;
-      carregarPendentes153();
+      carregarPendentes153();ajustarPendentes173();
       document.getElementById('etiquetaOP').focus();
     });
     document.getElementById('botaoGestao').addEventListener('click', function() {
@@ -1029,7 +1021,7 @@ body:not(.gestao) main>footer{display:none}
       itens.forEach(([titulo,valor,classe])=>{const box=document.createElement('div');box.className='dash-card '+classe;const l=document.createElement('small');l.textContent=titulo;const v=document.createElement('strong');v.textContent=valor;box.append(l,v);cards.appendChild(box);});
       preencherTabela157('tabelaInjetoras157',r.injetoras.map(x=>linha157([x.codigo,numero157(x.producaoKg),numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops])));
       preencherTabela157('tabelaMasters157',r.masters.map(x=>{const tr=linha157([x.codigo,x.descricao,numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops]);tr.className='clicavel';tr.tabIndex=0;tr.addEventListener('click',()=>detalharMaster157(x));tr.addEventListener('keydown',e=>{if(e.key==='Enter')detalharMaster157(x);});return tr;}));
-      preencherTabela157('tabelaRecentes157',r.registrosRecentes.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,Number.isFinite(x.masterEstrutura)?numero157(x.masterEstrutura)+'%':'—',x.ultimaContraprova==null?'—':numero157(x.ultimaContraprova)+'%',x.status])));
+      preencherTabela157('tabelaRecentes157',r.registrosRecentes.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,Number.isFinite(x.masterEstrutura)?numero157(x.masterEstrutura)+'%':'—',x.ultimaContraprova==null?'—':numero157(x.ultimaContraprova)+'%',x.masterCodigos||'N/A',x.aditivoCodigos||'N/A',x.status])));
       document.getElementById('detalheMaster157').hidden=true;
       const sel=document.getElementById('injetoraFiltro157'),atual=sel.value,nomes=[...new Set(r.injetoras.map(x=>x.codigo))];
       // Não apagar opções de outros filtros após uma consulta filtrada.
@@ -1159,7 +1151,7 @@ body:not(.gestao) main>footer{display:none}
     document.getElementById('abrirHistorico157').addEventListener('click',()=>alternarGestao148('historico'));
 
     function alternarGestao148(aba){
-      const titulos={painel:'Painel de Gestão',registros:'Registros de aplicação',importacao:'Importação de estruturas',aditivos:'Cadastro de aditivos',injetoras:'Cadastro de injetoras',dosadores:'Cadastro de dosadores',usuarios:'Usuários e auditoria',historico:'Consultas e contraprovas'};
+      const titulos={painel:'Painel de Gestão',registros:'Registros de aplicação',importacao:'Importação de estruturas',aditivos:'Cadastro de aditivos',injetoras:'Cadastro de injetoras',dosadores:'Cadastro de dosadores',usuarios:'Usuários e auditoria',historico:'Consultas e contraprovas',config173:'Tolerância e destinatários'};
       document.getElementById('gestaoTituloSecao').textContent=titulos[aba]||'Painel de Gestão';
       document.getElementById('painelGeral157').hidden=aba!=='painel';
       document.getElementById('painelRegistros157').hidden=aba!=='registros';
@@ -1171,6 +1163,9 @@ body:not(.gestao) main>footer{display:none}
       document.getElementById('painelDosadores').hidden=aba!=='dosadores';
       document.getElementById('painelHistorico156').hidden=aba!=='historico';
       document.getElementById('painelUsuarios160').hidden=aba!=='usuarios';
+      document.getElementById('painelConfig173').hidden=aba!=='config173';
+      document.getElementById('abaConfig173').classList.toggle('ativo',aba==='config173');
+      if(aba==='config173')carregarConfig173();
       document.getElementById('abaImportacao').classList.toggle('ativo',aba==='importacao');
       document.getElementById('abaAditivos').classList.toggle('ativo',aba==='aditivos');
       document.getElementById('abaInjetoras').classList.toggle('ativo',aba==='injetoras');
@@ -1182,6 +1177,12 @@ body:not(.gestao) main>footer{display:none}
       if(aba==='usuarios') carregarUsuarios160();
       if(aba==='dosadores') {limparDosador151();carregarDosadores151();}
     }
+
+    let destinatarios173=[];
+    async function carregarConfig173(){const aviso=document.getElementById('avisoConfig173');aviso.textContent='Carregando...';try{const r=await requisicao({acao:'listarConfiguracoes173',token:tokenSessao});if(!r.sucesso)throw Error(r.mensagem);document.getElementById('tol173').value=r.tolerancia;destinatarios173=r.destinatarios;const corpo=document.getElementById('listaDest173');corpo.replaceChildren();r.destinatarios.forEach(d=>{const tr=document.createElement('tr');[d.nome,d.setor,d.email,d.ativo?'Ativo':'Inativo'].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});const td=document.createElement('td'),btn=document.createElement('button');btn.textContent='Editar';btn.type='button';btn.className='secundario';btn.addEventListener('click',()=>{document.getElementById('idDest173').value=d.id;document.getElementById('nomeDest173').value=d.nome;document.getElementById('setorDest173').value=d.setor;document.getElementById('emailDest173').value=d.email;document.getElementById('ativoDest173').value=d.ativo?'SIM':'NAO';});td.append(btn);tr.append(td);corpo.append(tr);});aviso.textContent='Configurações carregadas.';}catch(e){aviso.textContent=e.message;}}
+    document.getElementById('abaConfig173').addEventListener('click',()=>alternarGestao148('config173'));
+    document.getElementById('salvarTol173').addEventListener('click',async function(){this.disabled=true;try{const r=await requisicao({acao:'salvarTolerancia173',token:tokenSessao,valor:document.getElementById('tol173').value});document.getElementById('avisoConfig173').textContent=r.mensagem||'Concluído';if(r.sucesso)await carregarConfig173();}catch(e){document.getElementById('avisoConfig173').textContent=e.message;}finally{this.disabled=false;}});
+    document.getElementById('formDest173').addEventListener('submit',async function(e){e.preventDefault();const b=this.querySelector('button[type=submit]');b.disabled=true;try{const r=await requisicao({acao:'salvarDestinatario173',token:tokenSessao,id:document.getElementById('idDest173').value,nome:document.getElementById('nomeDest173').value,setor:document.getElementById('setorDest173').value,email:document.getElementById('emailDest173').value,tipos:'CADEIA_AJUDA',ativo:document.getElementById('ativoDest173').value==='SIM'});document.getElementById('avisoConfig173').textContent=r.mensagem||'Concluído';if(r.sucesso){this.reset();document.getElementById('idDest173').value='';await carregarConfig173();}}catch(e){document.getElementById('avisoConfig173').textContent=e.message;}finally{b.disabled=false;}});
     document.getElementById('abaPainel157').addEventListener('click',()=>{alternarGestao148('painel');if(!dadosPainel157) consultarPainel157();});
     document.getElementById('abaRegistros157').addEventListener('click',()=>{alternarGestao148('registros');renderizarRegistros157();});
     document.getElementById('abaImportacao').addEventListener('click',()=>alternarGestao148('importacao'));
@@ -1420,7 +1421,7 @@ body:not(.gestao) main>footer{display:none}
         await carregarInjetoras149();
         aviso.textContent='Injetora salva com sucesso.';
       } catch(_) {aviso.textContent='Falha de comunicação ao salvar a injetora.';}
-      finally {botao.disabled=false;}
+      finally {botao.disabled=false;consultandoLeitura173=false;ajustarPendentes173();}
     });
     async function carregarAditivos148(){
       const aviso=document.getElementById('avisoAditivos');aviso.textContent='Carregando aditivos...';
@@ -1463,7 +1464,11 @@ body:not(.gestao) main>footer{display:none}
       telaProducao.hidden = true;
       telaInicial.hidden = false;
     });
+    let timerLeitura173=null,consultandoLeitura173=false,ultimaLeitura173='';
     document.getElementById('etiquetaOP').addEventListener('input', function() {
+      clearTimeout(timerLeitura173);
+      const etiqueta=this.value.trim();
+      if(/^\d+\|\d+\|[A-Za-z0-9-]+$/.test(etiqueta)&&etiqueta!==ultimaLeitura173){timerLeitura173=setTimeout(()=>{if(!consultandoLeitura173&&document.getElementById('resultadoOP').hidden){ultimaLeitura173=etiqueta;document.getElementById('formOP').requestSubmit();}},350);}
       limparAvisoVerde155();
       consultaAtual150 = null;
       chaveAtual150 = null;
@@ -1477,6 +1482,7 @@ body:not(.gestao) main>footer{display:none}
       document.getElementById('resultadoOP').hidden = true;
       resetAplicacao150();
       if (!tokenSessao) { mostrarLogin('Sessão inválida. Entre novamente.'); return; }
+      if(consultandoLeitura173)return;consultandoLeitura173=true;
       botao.disabled = true;
       avisoOP.textContent = 'Consultando estrutura...';
       try {
@@ -1498,7 +1504,7 @@ body:not(.gestao) main>footer{display:none}
         document.getElementById('salvarAplicacao150').disabled = !r.estruturaValida;
         document.getElementById('avisoAplicacao150').textContent = r.estruturaValida ?
           'Preencha os campos para registrar.' : 'Estrutura inválida: registro bloqueado.';
-        document.getElementById('resultadoOP').hidden=false;
+        document.getElementById('resultadoOP').hidden=false;ajustarPendentes173();
         try {await carregarDosadoresProducao151();} catch(_) {document.getElementById('avisoAplicacao150').textContent='Não foi possível carregar os dosadores.';document.getElementById('salvarAplicacao150').disabled=true;}
         avisoOP.textContent='Consulta concluída. Nenhum dado foi gravado.';
       } catch(_) { avisoOP.textContent='Falha na comunicação com o servidor.'; }
