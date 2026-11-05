@@ -236,11 +236,11 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           </div>
         </section>
       <section id="secaoPendentes153" class="resultado">
-        <h3>Ocorrências pendentes</h3>
-        <p style="text-align:left">Selecione uma ocorrência para continuar a tratativa, sem digitar IDs.</p>
-        <button id="atualizarPendentes153" type="button" class="voltar">Atualizar ocorrências</button>
+        <h3>Registros do turno — hoje e ontem</h3>
+        <p style="text-align:left">Aplicações realizadas com este login, independentemente do abastecedor. Selecione uma não conformidade para continuar o tratamento.</p>
+        <button id="atualizarPendentes153" type="button" class="voltar">Atualizar registros</button>
         <div id="avisoPendentes153" class="notice" role="status" aria-live="polite"></div>
-        <div id="listaPendentes153" style="display:grid;gap:12px;margin-top:12px"></div>
+        <div class="dash-tabela" style="overflow-x:auto"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="listaPendentes153"></tbody></table></div>
       </section>
       <button id="voltarInicio" class="voltar" type="button">Voltar ao início</button>
     </section>
@@ -262,7 +262,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         <h3>Resultado por código de Master</h3><p style="text-align:left">Clique em um Master para visualizar as OPs relacionadas.</p>
         <div class="dash-tabela"><table><thead><tr><th>Código</th><th>Descrição</th><th>Economia (kg)</th><th>Adicional (kg)</th><th>Saldo (kg)</th><th>OPs</th></tr></thead><tbody id="tabelaMasters157"></tbody></table></div>
         <div id="detalheMaster157" class="dash-detalhe" hidden></div>
-        <h3>Últimos 10 registros</h3><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Master</th><th>Aditivo</th><th>Status</th></tr></thead><tbody id="tabelaRecentes157"></tbody></table></div>
+        <h3>Últimos 10 registros</h3><div class="dash-tabela"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Master</th><th>Aditivo</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="tabelaRecentes157"></tbody></table></div>
         <button id="verTodos157" type="button" class="secundario">Ver todos os registros</button>
         <p style="text-align:left;font-size:12px">Estimativa: a última contraprova é aplicada à quantidade total registrada. Não representa consumo físico medido.</p>
       </div>
@@ -501,38 +501,42 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     async function carregarPendentes153() {
       const aviso=document.getElementById('avisoPendentes153');
       const lista=document.getElementById('listaPendentes153');
-      aviso.textContent='Consultando ocorrências...';
+      aviso.textContent='Consultando registros do turno...';
       lista.replaceChildren();
       try {
-        const r=await requisicao({acao:'listarOcorrenciasPendentes153',token:tokenSessao});
+        const r=await requisicao({acao:'listarRegistrosTurno178',token:tokenSessao});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha na consulta.');
-        aviso.textContent=r.total===0?'Nenhuma ocorrência pendente.':
-          r.total+' ocorrência(s) pendente(s).'+(r.total>100?' Exibindo as 100 mais recentes.':'');
-        r.ocorrencias.forEach(o=>{
-          const card=document.createElement('div');
-          card.style.cssText='border:1px solid #d1d8e1;border-radius:10px;padding:14px';
-          const titulo=document.createElement('div');
-          titulo.textContent='OP '+o.op+' | Produto '+o.produto+' | '+o.status;
-          titulo.style.fontWeight='700';
-          const detalhe=document.createElement('p');
-          detalhe.style.textAlign='left';
-          detalhe.textContent='Injetora: '+o.injetora+' | Dosador: '+o.dosador+' | '+o.dataHora;
-          const botao=document.createElement('button');
-          botao.type='button';botao.textContent='Continuar ocorrência';
-          botao.addEventListener('click',async()=>{
-            botao.disabled=true;
-            try{
-              reiniciarEmail155();
-              const situacao=await consultarEstado152(o.idAplicacao);
-              aviso.textContent='Ocorrência carregada: OP '+situacao.op;
-              document.getElementById('painelNC152').scrollIntoView({behavior:'smooth',block:'start'});
-            }catch(e){aviso.textContent=e.message;}
-            finally{botao.disabled=false;}
+        aviso.textContent=r.total===0?'Nenhum registro deste login hoje ou ontem.':
+          r.total+' registro(s) do turno.'+(r.limitado?' Exibindo os mais recentes.':'');
+        r.registros.forEach(o=>{
+          const tr=document.createElement('tr');
+          const percentual=v=>v==null||v===''?'—':String(v).replace('.',',')+'%';
+          const status=String(o.status||'');
+          [o.dataHora,o.op,o.produto,o.injetora,percentual(o.estrutura),percentual(o.ultimaContraprova),
+            status==='CONFORME'?'CONFORME':status.replaceAll('_',' '),o.responsavel||'—'].forEach(v=>{
+            const td=document.createElement('td');td.textContent=v;tr.appendChild(td);
           });
-          card.append(titulo,detalhe,botao);
-          lista.appendChild(card);
+          if(['NC_RECALIBRAGEM','NC_RECALIBRADA','NC_CADEIA_AJUDA'].includes(status)){
+            tr.classList.add('clicavel');tr.tabIndex=0;
+            const abrir=async()=>{
+              if(tr.dataset.carregando==='1')return;
+              tr.dataset.carregando='1';
+              try{
+                reiniciarEmail155();
+                const situacao=await consultarEstado152(o.idAplicacao);
+                aviso.textContent='Ocorrência carregada: OP '+situacao.op;
+                document.getElementById('painelNC152').scrollIntoView({behavior:'smooth',block:'start'});
+                ajustarPendentes173();
+              }catch(e){aviso.textContent=e.message||'Falha ao abrir ocorrência.';}
+              finally{tr.dataset.carregando='0';}
+            };
+            tr.title='Clique para continuar a não conformidade';
+            tr.addEventListener('click',abrir);
+            tr.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();abrir();}});
+          }
+          lista.appendChild(tr);
         });
-      }catch(e){aviso.textContent=e.message;}
+      }catch(e){aviso.textContent=e.message||'Falha ao consultar registros.';}
     }
     function ajustarPendentes173(){document.getElementById('secaoPendentes153').hidden=!document.getElementById('resultadoOP').hidden||!document.getElementById('painelNC152').hidden;}
     document.getElementById('atualizarPendentes153').addEventListener('click',carregarPendentes153);
@@ -1036,7 +1040,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       itens.forEach(([titulo,valor,classe])=>{const box=document.createElement('div');box.className='dash-card '+classe;const l=document.createElement('small');l.textContent=titulo;const v=document.createElement('strong');v.textContent=valor;box.append(l,v);cards.appendChild(box);});
       preencherTabela157('tabelaInjetoras157',r.injetoras.map(x=>linha157([x.codigo,numero157(x.producaoKg),numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops])));
       preencherTabela157('tabelaMasters157',r.masters.map(x=>{const tr=linha157([x.codigo,x.descricao,numero157(x.economiaKg),numero157(x.adicionalKg),numero157(x.saldoKg),x.ops]);tr.className='clicavel';tr.tabIndex=0;tr.addEventListener('click',()=>detalharMaster157(x));tr.addEventListener('keydown',e=>{if(e.key==='Enter')detalharMaster157(x);});return tr;}));
-      preencherTabela157('tabelaRecentes157',r.registrosRecentes.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,Number.isFinite(x.masterEstrutura)?numero157(x.masterEstrutura)+'%':'—',x.ultimaContraprova==null?'—':numero157(x.ultimaContraprova)+'%',x.masterCodigos||'N/A',x.aditivoCodigos||'N/A',x.status])));
+      preencherTabela157('tabelaRecentes157',r.registrosRecentes.map(x=>linha157([x.dataHora,x.op,x.produto,x.injetora,Number.isFinite(x.masterEstrutura)?numero157(x.masterEstrutura)+'%':'—',x.ultimaContraprova==null?'—':numero157(x.ultimaContraprova)+'%',x.masterCodigos||'N/A',x.aditivoCodigos||'N/A',x.status,x.responsavel||'—'])));
       document.getElementById('detalheMaster157').hidden=true;
       const sel=document.getElementById('injetoraFiltro157'),atual=sel.value,nomes=[...new Set(r.injetoras.map(x=>x.codigo))];
       // Não apagar opções de outros filtros após uma consulta filtrada.
