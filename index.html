@@ -139,11 +139,11 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     <h1>Sistema de Aplicação de Master</h1>
     <section id="telaLogin">
       <p>Acesso de colaboradores</p>
-      <form id="login" autocomplete="on">
+      <form id="login" autocomplete="off">
         <label for="matricula">Matrícula</label>
-        <input id="matricula" name="matricula" inputmode="numeric" autocomplete="username" maxlength="20" placeholder="Digite sua matrícula" required pattern="[0-9]{1,20}">
+        <input id="matricula" name="matricula" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="Digite sua matrícula" required pattern="[0-9]{1,20}">
         <label for="senha">Senha</label>
-        <input id="senha" name="senha" type="password" autocomplete="current-password" maxlength="256" placeholder="Digite sua senha" required>
+        <input id="senha" name="senha" type="password" autocomplete="off" maxlength="256" placeholder="Digite sua senha" required>
         <button id="entrar" type="submit">Entrar</button>
       </form>
       <form id="formTroca162" autocomplete="off" hidden>
@@ -236,9 +236,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           </div>
         </section>
       <section id="secaoPendentes153" class="resultado">
-        <h3>Registros do turno — hoje e ontem</h3>
-        <p style="text-align:left">Aplicações realizadas com este login, independentemente do abastecedor. Selecione uma não conformidade para continuar o tratamento.</p>
-        <button id="atualizarPendentes153" type="button" class="voltar">Atualizar registros</button>
+        <h3>Histórico de aplicações — Hoje e ontem</h3>
+        <button id="atualizarPendentes153" type="button" class="voltar" hidden>Atualizar registros</button>
         <div id="avisoPendentes153" class="notice" role="status" aria-live="polite"></div>
         <div class="dash-tabela" style="overflow-x:auto"><table><thead><tr><th>Data</th><th>OP</th><th>Produto</th><th>Injetora</th><th>Estrutura</th><th>Última contraprova</th><th>Status</th><th>Responsável</th></tr></thead><tbody id="listaPendentes153"></tbody></table></div>
       </section>
@@ -501,11 +500,13 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     async function carregarPendentes153() {
       const aviso=document.getElementById('avisoPendentes153');
       const lista=document.getElementById('listaPendentes153');
+      aviso.hidden=false;
       aviso.textContent='Consultando registros do turno...';
       lista.replaceChildren();
       try {
         const r=await requisicao({acao:'listarRegistrosTurno178',token:tokenSessao});
         if(!r.sucesso)throw new Error(r.mensagem||'Falha na consulta.');
+        aviso.hidden = r.total > 0 && !r.limitado;
         aviso.textContent=r.total===0?'Nenhum registro deste login hoje ou ontem.':
           r.total+' registro(s) do turno.'+(r.limitado?' Exibindo os mais recentes.':'');
         r.registros.forEach(o=>{
@@ -536,7 +537,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           }
           lista.appendChild(tr);
         });
-      }catch(e){aviso.textContent=e.message||'Falha ao consultar registros.';}
+      }catch(e){aviso.hidden=false;aviso.textContent=e.message||'Falha ao consultar registros.';}
     }
     function ajustarPendentes173(){document.getElementById('secaoPendentes153').hidden=!document.getElementById('resultadoOP').hidden||!document.getElementById('painelNC152').hidden;}
     document.getElementById('atualizarPendentes153').addEventListener('click',carregarPendentes153);
@@ -830,6 +831,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     function mostrarLogin(texto) {
       tokenSessao = null;
       expiraEm = 0;
+      form.reset();
+      matricula.value = '';
       senha.value = '';
       telaInicial.hidden = true;
       telaProducao.hidden = true;
