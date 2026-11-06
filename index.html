@@ -460,11 +460,11 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         document.getElementById('novaContraprova152').value='';
         idOcorrencia152=null;estadoOcorrencia152=null;
         document.getElementById('etiquetaOP').focus();
-        carregarPendentes153();ajustarPendentes173();
+        carregarPendentes153(true);ajustarPendentes173();
       } else if (resultadoPendente151 && resultadoPendente151.status==='NC_RECALIBRAGEM') {
         idOcorrencia152 = resultadoPendente151.idAplicacao;
         abrirPainelNC152('NC_RECALIBRAGEM');
-        carregarPendentes153();ajustarPendentes173();
+        carregarPendentes153(true);ajustarPendentes173();
       }
       if(resultadoPendente151 && resultadoPendente151.status==='NC_CADEIA_AJUDA') {
         abrirPainelNC152('NC_CADEIA_AJUDA');
@@ -497,7 +497,17 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       abrirPainelNC152(r.status);
       return r;
     }
-    async function carregarPendentes153() {
+    let consultaHistorico180=null;
+    let ultimaConsultaHistorico180=0;
+    async function carregarPendentes153(forcar=false) {
+      if(!tokenSessao)return;
+      if(consultaHistorico180)return consultaHistorico180;
+      if(!forcar && Date.now()-ultimaConsultaHistorico180<3000)return;
+      consultaHistorico180=executarHistorico180();
+      try{await consultaHistorico180;ultimaConsultaHistorico180=Date.now();}
+      finally{consultaHistorico180=null;}
+    }
+    async function executarHistorico180() {
       const aviso=document.getElementById('avisoPendentes153');
       const lista=document.getElementById('listaPendentes153');
       aviso.hidden=false;
@@ -540,7 +550,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       }catch(e){aviso.hidden=false;aviso.textContent=e.message||'Falha ao consultar registros.';}
     }
     function ajustarPendentes173(){document.getElementById('secaoPendentes153').hidden=!document.getElementById('resultadoOP').hidden||!document.getElementById('painelNC152').hidden;}
-    document.getElementById('atualizarPendentes153').addEventListener('click',carregarPendentes153);
+    document.getElementById('atualizarPendentes153').addEventListener('click',()=>carregarPendentes153(true));
     document.getElementById('confirmarRecalibragem152').addEventListener('click',async function() {
       if(trabalhandoNC152||!idOcorrencia152)return;
       const responsavel=document.getElementById('responsavelRecalibragem152').value.trim();
@@ -558,7 +568,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           idAplicacao:idOcorrencia152,responsavel,contraprova,chaveRequisicao:crypto.randomUUID()});
         if(!segunda.sucesso)throw new Error(segunda.mensagem||'Falha ao validar a segunda contraprova. A recalibragem foi registrada; tente validar novamente.');
         await consultarEstado152(idOcorrencia152);
-        carregarPendentes153();ajustarPendentes173();
+        carregarPendentes153(true);ajustarPendentes173();
         avisoResultado151({status:segunda.status==='CONFORME'?'CONFORME':'NC_CADEIA_AJUDA',idAplicacao:idOcorrencia152,
           limiteMinimo:segunda.limiteMinimo,limiteMaximo:segunda.limiteMaximo});
       }catch(e){document.getElementById('statusNC152').textContent=e.message;
@@ -576,7 +586,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           idAplicacao:idOcorrencia152,responsavel,contraprova,chaveRequisicao:crypto.randomUUID()});
         if(!r.sucesso)throw new Error(r.mensagem);
         await consultarEstado152(idOcorrencia152);
-        carregarPendentes153();ajustarPendentes173();
+        carregarPendentes153(true);ajustarPendentes173();
         avisoResultado151({status:r.status==='CONFORME'?'CONFORME':'NC_CADEIA_AJUDA',
           idAplicacao:idOcorrencia152,limiteMinimo:r.limiteMinimo,limiteMaximo:r.limiteMaximo});
       }catch(e){document.getElementById('statusNC152').textContent=e.message;}
@@ -623,7 +633,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       idOcorrencia152=null;
       estadoOcorrencia152=null;
       document.getElementById('etiquetaOP').focus();
-      carregarPendentes153();ajustarPendentes173();
+      carregarPendentes153(true);ajustarPendentes173();
     }
     document.getElementById('abrirEmail152').addEventListener('click',async function(){
       if(!estadoOcorrencia152||estadoOcorrencia152.status!=='NC_CADEIA_AJUDA')return;
@@ -696,10 +706,12 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       }catch(e){aviso.textContent=e.message;}
       finally{confirmandoEnvio154=false;botao.disabled=false;}
     });
+    let cacheDosadores180=null;
     async function carregarDosadoresProducao151() {
       const sel=document.getElementById('dosador150');sel.replaceChildren();
       const vazio=document.createElement('option');vazio.value='';vazio.textContent='Selecione o dosador';sel.appendChild(vazio);
-      const r=await requisicao({acao:'listarDosadores151',token:tokenSessao});
+      let r=cacheDosadores180 && cacheDosadores180.token===tokenSessao && Date.now()-cacheDosadores180.em<30000 ? cacheDosadores180.resposta : null;
+      if(!r){r=await requisicao({acao:'listarDosadores151',token:tokenSessao});if(r.sucesso)cacheDosadores180={token:tokenSessao,em:Date.now(),resposta:r};}
       if(!r.sucesso) throw new Error('Não foi possível consultar os dosadores.');
       for(const d of r.dosadores){const o=document.createElement('option');o.value=d.id;o.textContent=d.nome;sel.appendChild(o);}
       sel.value='';
@@ -737,7 +749,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           id:document.getElementById('idDosador151').value,
           nome:document.getElementById('nomeDosador151').value,ativo:situacao==='SIM'});
         if(!r.sucesso){aviso.textContent=r.mensagem||'Não foi possível salvar.';return;}
-        limparDosador151();await carregarDosadores151();aviso.textContent='Dosador salvo com sucesso.';
+        cacheDosadores180=null;limparDosador151();await carregarDosadores151();aviso.textContent='Dosador salvo com sucesso.';
       }catch(_){aviso.textContent='Falha de comunicação ao salvar.';}finally{btn.disabled=false;}
     });
     const gerarChave150 = () => crypto.randomUUID();
@@ -801,6 +813,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           chaveAtual150 = null;
           botao.disabled = true;
           document.getElementById('previa150').textContent = 'Registro concluído.';
+          ultimaConsultaHistorico180=0;
           avisoResultado151(r);
         } else {
           botao.disabled = false;
@@ -830,6 +843,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     }
     function mostrarLogin(texto) {
       tokenSessao = null;
+      cacheDosadores180=null;
+      ultimaConsultaHistorico180=0;
       expiraEm = 0;
       form.reset();
       matricula.value = '';
@@ -931,7 +946,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       if (!tokenSessao) return;
       telaInicial.hidden = true;
       telaProducao.hidden = false;
-      carregarPendentes153();ajustarPendentes173();
+      carregarPendentes153(true);ajustarPendentes173();
       document.getElementById('etiquetaOP').focus();
     });
     document.getElementById('botaoGestao').addEventListener('click', function() {
@@ -1530,6 +1545,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     document.getElementById('sair').addEventListener('click', async function() {
       const token = tokenSessao;
       mostrarLogin('Sessão encerrada neste navegador.');
+      ultimaConsultaHistorico180=0;
+      cacheDosadores180=null;
       if (token) {
         try { await requisicao({acao:'logout',token}); }
         catch (_) { mensagem('A sessão foi removida desta página, mas não foi possível confirmar a saída no servidor.', true); }
