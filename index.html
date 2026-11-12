@@ -969,7 +969,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       const confirmar = document.getElementById('confirmarImportacao');
       confirmar.disabled = true; resumo.hidden = true; linhasImportacao = null;
       if (!arquivo) {aviso.textContent = 'Nenhum arquivo selecionado.';return;}
-      if (!/\.xlsx$/i.test(arquivo.name) || arquivo.size > 5000000) {aviso.textContent='Selecione um .xlsx de até 5 MB.';return;}
+      if (!/\.xlsx$/i.test(arquivo.name) || arquivo.size > 15000000) {aviso.textContent='Selecione um .xlsx de até 15 MB.';return;}
       if (typeof XLSX === 'undefined') {aviso.textContent='Leitor Excel indisponível. Verifique a conexão com a biblioteca SheetJS.';return;}
       aviso.textContent='Lendo Excel...';
       try {
@@ -983,14 +983,14 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
           const r=matriz[i];if(!r||!r.some(x=>String(x).trim()))continue;
           const produto=String(r[0]).trim(),componente=String(r[3]).trim();
           const peso=Number(String(r[2]).replace(',','.'));
-          const percentual=Number(String(r[10]).replace(',','.'))*100; // No Excel: 0,955 = 95,5%.
+          const percentual=Number(String(r[10]).replace(',','.')); // Protheus exporta 95,5 como 95,5, não 0,955.
           if(!produto) {problemas.push('Linha '+(i+1)+': produto vazio');continue;}
           produtos.add(produto);
           if(componente && (!Number.isFinite(percentual)||percentual<0||percentual>100)) problemas.push('Linha '+(i+1)+': percentual inválido');
           if(componente) somas.set(produto,(somas.get(produto)||0)+percentual);
           linhas.push({produto,descricao:String(r[1]).trim(),peso,componente,grupo:String(r[4]).trim(),descricaoComponente:String(r[5]).trim(),percentual:componente?Math.round(percentual*1000000)/1000000:0});
         }
-        if(!linhas.length||linhas.length>5000) throw new Error('Quantidade de linhas inválida (limite 5.000).');
+        if(!linhas.length||linhas.length>100000) throw new Error('Quantidade de linhas inválida (limite 100.000).');
         for(const p of produtos) if(!somas.has(p)||Math.abs(somas.get(p)-100)>0.05) problemas.push('Produto '+p+': total '+(somas.get(p)||0).toFixed(3)+'%');
         const c=document.getElementById('contadoresImportacao');c.replaceChildren();
         for(const [k,v] of [['Produtos',produtos.size],['Componentes',linhas.filter(x=>x.componente).length],['Linhas',linhas.length],['Problemas',problemas.length]]){const span=document.createElement('span');span.textContent=k+': '+v;c.appendChild(span);}
@@ -998,8 +998,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         for(const r of linhas.slice(0,12)){const tr=document.createElement('tr');for(const v of [r.produto,r.descricao,r.peso,r.componente,r.grupo,r.componente?r.percentual+'%':'—']){const td=document.createElement('td');td.textContent=String(v);tr.appendChild(td);}tbody.appendChild(tr);}
         document.getElementById('alertasImportacao').textContent=problemas.length?'Problemas: '+problemas.slice(0,8).join(' | '):'Pré-validação concluída. Confirme para gravar.';
         linhasImportacao=linhas;nomeArquivoImportacao=arquivo.name;
-        const tamanho=JSON.stringify({acao:'importarEstruturas147',token:tokenSessao,arquivo:arquivo.name,linhas}).length;
-        if(tamanho>900000) problemas.push('Arquivo excede o limite de transmissão de 900 KB.');
+        // Transmissão em lotes de até 300 linhas, sem limite único de 900 KB.
         confirmar.disabled=problemas.length>0;
         resumo.hidden=false;
         aviso.textContent=problemas.length?'Corrija o arquivo antes de importar.':'Arquivo lido. Nenhuma alteração gravada ainda.';
@@ -1484,11 +1483,20 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       const botao=this;botao.disabled=true;
       const aviso=document.getElementById('avisoImportacao');aviso.textContent='Gravando importação...';
       try {
-        const r=await requisicao({acao:'importarEstruturas147',token:tokenSessao,arquivo:nomeArquivoImportacao,linhas:linhasImportacao});
+        const total=linhasImportacao.length;
+        const inicio=await requisicao({acao:'iniciarImportacao181',token:tokenSessao,arquivo:nomeArquivoImportacao,total});
+        if(!inicio.sucesso)throw new Error(inicio.mensagem||'Não foi possível iniciar.');
+        for(let i=0;i<total;i+=300){
+          aviso.textContent='Enviando estruturas: '+Math.min(i+300,total)+' de '+total+' linhas...';
+          const lote=await requisicao({acao:'loteImportacao181',token:tokenSessao,id:inicio.id,inicio:i,linhas:linhasImportacao.slice(i,i+300)});
+          if(!lote.sucesso)throw new Error(lote.mensagem||'Falha no lote '+(i+1));
+        }
+        aviso.textContent='Validando e substituindo a base...';
+        const r=await requisicao({acao:'finalizarImportacao181',token:tokenSessao,id:inicio.id});
         aviso.textContent=r.sucesso?'Importação concluída: '+r.produtos+' produtos e '+r.componentes+' componentes.':(r.mensagem||'Importação rejeitada.');
         if(r.sucesso){linhasImportacao=null;document.getElementById('arquivoEstrutura').value='';document.getElementById('resumoImportacao').hidden=true;document.getElementById('confirmarImportacao').disabled=true;}
         else botao.disabled=false;
-      }catch(_){aviso.textContent='Falha de comunicação. Confira o histórico antes de tentar novamente.';}
+      }catch(e){aviso.textContent=e.message||'Falha de comunicação. Confira a base antes de tentar novamente.';botao.disabled=false;}
     });
     document.getElementById('voltarInicio').addEventListener('click', function() {
       limparAvisoVerde155();
