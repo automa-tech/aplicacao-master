@@ -272,6 +272,11 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       <label for="arquivoEstrutura">Arquivo de estrutura (.xlsx)</label>
       <input id="arquivoEstrutura" class="arquivo" type="file" accept=".xlsx">
       <div id="avisoImportacao" class="notice" role="status" aria-live="polite">Nenhum arquivo selecionado.</div>
+       <div id="progressoImportacao190" class="import-progress190" hidden role="status" aria-live="polite">
+         <div class="cabecalho190"><span id="etapaImportacao190">Preparando importação...</span><span id="percentualImportacao190" class="percentual190">0%</span></div>
+         <div id="trilhoImportacao190" class="trilho190" role="progressbar" aria-label="Conclusão da importação" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="barraImportacao190" class="preenchimento190"></div></div>
+         <div class="detalhes190"><span id="linhasImportacao190">0 de 0 linhas enviadas</span><span id="tempoImportacao190">Tempo restante: calculando...</span></div>
+       </div>
       <div id="resumoImportacao" class="resultado" hidden>
         <div id="contadoresImportacao" class="dados-op"></div>
         <p id="alertasImportacao" style="text-align:left"></p>
@@ -968,6 +973,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       const resumo = document.getElementById('resumoImportacao');
       const confirmar = document.getElementById('confirmarImportacao');
       confirmar.disabled = true; resumo.hidden = true; linhasImportacao = null;
+      document.getElementById('progressoImportacao190').hidden=true;
       if (!arquivo) {aviso.textContent = 'Nenhum arquivo selecionado.';return;}
       if (!/\.xlsx$/i.test(arquivo.name) || arquivo.size > 15000000) {aviso.textContent='Selecione um .xlsx de até 15 MB.';return;}
       if (typeof XLSX === 'undefined') {aviso.textContent='Leitor Excel indisponível. Verifique a conexão com a biblioteca SheetJS.';return;}
@@ -1480,26 +1486,55 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         this.reset();document.getElementById('classeAditivo').value='';document.getElementById('ativoAditivo').value='';await carregarAditivos148();aviso.textContent='Aditivo salvo com sucesso.';
       }catch(_){aviso.textContent='Falha de comunicação ao salvar.';}finally{botao.disabled=false;}
     });
+    // Etapa 1.90: 0–95% = lotes confirmados pelo servidor; 97% = finalização;
+    // 100% apenas após confirmação de sucesso do backend.
+    function atualizarProgresso190(percentual,etapa,enviadas,total,tempo){
+      const p=Math.max(0,Math.min(100,Math.floor(percentual)));
+      document.getElementById('progressoImportacao190').hidden=false;
+      document.getElementById('etapaImportacao190').textContent=etapa;
+      document.getElementById('percentualImportacao190').textContent=p+'%';
+      document.getElementById('barraImportacao190').style.width=p+'%';
+      document.getElementById('trilhoImportacao190').setAttribute('aria-valuenow',String(p));
+      document.getElementById('linhasImportacao190').textContent=enviadas.toLocaleString('pt-BR')+' de '+total.toLocaleString('pt-BR')+' linhas enviadas';
+      document.getElementById('tempoImportacao190').textContent=tempo;
+    }
     document.getElementById('confirmarImportacao').addEventListener('click', async function() {
       if(!tokenSessao||perfilSessao!=='GESTAO'||!linhasImportacao)return;
       if(!(await confirmarPersonalizado148()))return;
       const botao=this;botao.disabled=true;
-      const aviso=document.getElementById('avisoImportacao');aviso.textContent='Gravando importação...';
+      const aviso=document.getElementById('avisoImportacao');
+      const total=linhasImportacao.length;
+      const inicioTempo=performance.now();
+      atualizarProgresso190(0,'Iniciando importação...',0,total,'Tempo restante: calculando...');
+      aviso.textContent='Iniciando importação...';
       try {
-        const total=linhasImportacao.length;
         const inicio=await requisicao({acao:'iniciarImportacao181',token:tokenSessao,arquivo:nomeArquivoImportacao,total});
         if(!inicio.sucesso)throw new Error(inicio.mensagem||'Não foi possível iniciar.');
         for(let i=0;i<total;i+=300){
-          aviso.textContent='Enviando estruturas: '+Math.min(i+300,total)+' de '+total+' linhas...';
           const lote=await requisicao({acao:'loteImportacao181',token:tokenSessao,id:inicio.id,inicio:i,linhas:linhasImportacao.slice(i,i+300)});
           if(!lote.sucesso)throw new Error(lote.mensagem||'Falha no lote '+(i+1));
+          const enviadas=Math.min(i+300,total);
+          const decorrido=(performance.now()-inicioTempo)/1000;
+          const restante=enviadas>0?Math.ceil((decorrido/enviadas)*(total-enviadas)):0;
+          const estimativa=enviadas===total?'Envio concluído':('Envio restante: aproximadamente '+(restante>=60?Math.ceil(restante/60)+' min':restante+' s'));
+          atualizarProgresso190(95*enviadas/total,'Enviando estruturas...',enviadas,total,estimativa);
+          aviso.textContent='Enviando estruturas: '+enviadas.toLocaleString('pt-BR')+' de '+total.toLocaleString('pt-BR')+' linhas.';
         }
+        atualizarProgresso190(97,'Validando e substituindo a base...',total,total,'Aguardando confirmação do servidor...');
         aviso.textContent='Validando e substituindo a base...';
         const r=await requisicao({acao:'finalizarImportacao181',token:tokenSessao,id:inicio.id});
-        aviso.textContent=r.sucesso?'Importação concluída: '+r.produtos+' produtos e '+r.componentes+' componentes.':(r.mensagem||'Importação rejeitada.');
-        if(r.sucesso){linhasImportacao=null;document.getElementById('arquivoEstrutura').value='';document.getElementById('resumoImportacao').hidden=true;document.getElementById('confirmarImportacao').disabled=true;}
-        else botao.disabled=false;
-      }catch(e){aviso.textContent=e.message||'Falha de comunicação. Confira a base antes de tentar novamente.';botao.disabled=false;}
+        if(!r.sucesso)throw new Error(r.mensagem||'Importação rejeitada.');
+        atualizarProgresso190(100,'Importação concluída com sucesso',total,total,'Concluído');
+        aviso.textContent='Importação concluída: '+r.produtos+' produtos e '+r.componentes+' componentes.';
+        linhasImportacao=null;
+        document.getElementById('arquivoEstrutura').value='';
+        document.getElementById('resumoImportacao').hidden=true;
+      }catch(e){
+        document.getElementById('etapaImportacao190').textContent='Importação interrompida';
+        document.getElementById('tempoImportacao190').textContent='Verifique a mensagem de erro';
+        aviso.textContent=e.message||'Falha de comunicação. Confira a base antes de tentar novamente.';
+        botao.disabled=false;
+      }
     });
     document.getElementById('voltarInicio').addEventListener('click', function() {
       limparAvisoVerde155();
