@@ -182,10 +182,10 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     </section>
     <section id="telaProducao" hidden>
       <h2 style="font-size:19px;margin-top:25px">PRODUÇÃO — Consulta de OP</h2>
-      <p style="text-align:left">Leia a etiqueta no formato OP|PRODUTO|SEQUENCIAL.</p>
+      <p style="text-align:left">Leia a etiqueta no formato PRODUTO|OP|SEQUENCIAL|.</p>
       <form id="formOP">
         <label for="etiquetaOP">Etiqueta / leitor USB</label>
-        <input id="etiquetaOP" maxlength="160" placeholder="OP|PRODUTO|SEQUENCIAL" required autocomplete="off">
+        <input id="etiquetaOP" maxlength="160" placeholder="PRODUTO|OP|SEQUENCIAL|" required autocomplete="off">
         <button id="consultarOP" type="submit">Consultar estrutura</button>
       </form>
       <div id="avisoOP" class="notice" role="status" aria-live="polite">Aguardando leitura da etiqueta.</div>
@@ -1545,7 +1545,7 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     document.getElementById('etiquetaOP').addEventListener('input', function() {
       clearTimeout(timerLeitura173);
       const etiqueta=this.value.trim();
-      if(/^\d+\|\d+\|[A-Za-z0-9-]+$/.test(etiqueta)&&etiqueta!==ultimaLeitura173){timerLeitura173=setTimeout(()=>{if(!consultandoLeitura173&&document.getElementById('resultadoOP').hidden){ultimaLeitura173=etiqueta;document.getElementById('formOP').requestSubmit();}},350);}
+      if(/^[A-Za-z0-9_.-]{1,40}\|[A-Za-z0-9_-]{1,40}\|[A-Za-z0-9_-]{1,60}\|?$/.test(etiqueta)&&etiqueta!==ultimaLeitura173){timerLeitura173=setTimeout(()=>{if(!consultandoLeitura173&&document.getElementById('resultadoOP').hidden){ultimaLeitura173=etiqueta;document.getElementById('formOP').requestSubmit();}},350);}
       limparAvisoVerde155();
       consultaAtual150 = null;
       chaveAtual150 = null;
