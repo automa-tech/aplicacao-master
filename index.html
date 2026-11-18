@@ -902,10 +902,14 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       }catch(err){mensagem(err.message||'Erro ao alterar senha.',true);}
       finally{botao.disabled=false;}
     });
-    // Etapa 1.92 — QR Code de login: matrícula + quebra de linha + senha.
-    // O leitor pode transmitir a quebra de linha como Enter, Tab ou colagem.
+    // Etapa 1.94 — login manual independente do leitor QR.
+    // Reconhece leitura por velocidade, sem interceptar Enter da digitação manual.
     let qrLogin192=false;
     let timerQr192=null;
+    let inicioLeitura194=0;
+    let ultimoInput194=0;
+    let velocidadeLeitor194=false;
+    let timerQrContinuo193=null;
     function enviarLoginQr192(){
       clearTimeout(timerQr192);
       if(!qrLogin192 || ocupado || telaLogin.hidden || form.hidden)return;
@@ -917,53 +921,39 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       clearTimeout(timerQr192);
       timerQr192=setTimeout(enviarLoginQr192,650);
     }
+    matricula.addEventListener('input',function(){
+      clearTimeout(timerQrContinuo193);
+      if(telaLogin.hidden || form.hidden || ocupado)return;
+      const agora=performance.now();
+      const bruto=matricula.value;
+      if(bruto.length<=1 || agora-ultimoInput194>250){inicioLeitura194=agora;velocidadeLeitor194=false;}
+      ultimoInput194=agora;
+      if(bruto.length>=5 && agora-inicioLeitura194<450)velocidadeLeitor194=true;
+      if(velocidadeLeitor194 && /^\d{5}.+/.test(bruto) && bruto.length>5){
+        timerQrContinuo193=setTimeout(function(){
+          if(telaLogin.hidden || form.hidden || ocupado)return;
+          const achou=/^(\d{5})([^\r\n]+)$/.exec(matricula.value);
+          if(!achou || !/[^0-9]/.test(achou[2]))return;
+          matricula.value=achou[1];senha.value=achou[2];
+          qrLogin192=true;enviarLoginQr192();
+        },300);
+      }
+    });
     matricula.addEventListener('keydown',function(e){
-      if(e.key==='Enter' || e.key==='Tab'){
-        if(/^\d{1,20}$/.test(matricula.value.trim())){
-          e.preventDefault();
-          qrLogin192=true;
-          senha.focus();
-        }
+      if((e.key==='Enter'||e.key==='Tab') && velocidadeLeitor194 && /^\d{5}$/.test(matricula.value.trim())){
+        e.preventDefault();qrLogin192=true;senha.focus();
       }
     });
-    senha.addEventListener('input',function(){
-      if(qrLogin192)agendarLoginQr192();
-    });
+    senha.addEventListener('input',function(){if(qrLogin192)agendarLoginQr192();});
     senha.addEventListener('keydown',function(e){
-      if(e.key==='Enter' && qrLogin192){
-        e.preventDefault();
-        enviarLoginQr192();
-      }
+      if(e.key==='Enter' && qrLogin192){e.preventDefault();enviarLoginQr192();}
     });
     matricula.addEventListener('paste',function(e){
       const bruto=e.clipboardData?.getData('text')||'';
       const partes=bruto.split(/\r\n|\n|\r/).map(v=>v.trim()).filter(Boolean);
       if(partes.length===2 && /^\d{1,20}$/.test(partes[0]) && partes[1]){
-        e.preventDefault();
-        matricula.value=partes[0];senha.value=partes[1];
+        e.preventDefault();matricula.value=partes[0];senha.value=partes[1];
         qrLogin192=true;enviarLoginQr192();
-      }
-    });
-    // Etapa 1.93 — alguns leitores suprimem a quebra de linha do QR e
-    // enviam tudo no mesmo campo. Neste modo, a matrícula possui 5 dígitos.
-    let timerQrContinuo193=null;
-    matricula.addEventListener('input',function(){
-      clearTimeout(timerQrContinuo193);
-      if(telaLogin.hidden || form.hidden || ocupado)return;
-      const bruto=matricula.value;
-      // Aguarda o fim da digitação rápida do leitor; não tenta autenticar
-      // enquanto o QR ainda está chegando.
-      if(/^\d{5}.+/.test(bruto) && bruto.length>5){
-        timerQrContinuo193=setTimeout(function(){
-          if(telaLogin.hidden || form.hidden || ocupado)return;
-          const atual=matricula.value;
-          const achou=/^(\d{5})([^\r\n]+)$/.exec(atual);
-          if(!achou || !/[^0-9]/.test(achou[2]))return;
-          matricula.value=achou[1];
-          senha.value=achou[2];
-          qrLogin192=true;
-          enviarLoginQr192();
-        },300);
       }
     });
     form.addEventListener('submit', async function(event) {
@@ -1634,8 +1624,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         const campos = [['OP',r.op],['Produto',r.produto],['Descrição',r.descricao],['Peso líquido',Number.isFinite(r.pesoLiquido)?(new Intl.NumberFormat('pt-BR',{maximumFractionDigits:3}).format(r.pesoLiquido*1000)+' g'):'Não informado'],['Master de cor',r.masterPercentual+'%'],['Total estrutura',r.somaPercentual+'%']];
         for (const [k,v] of campos) { const el=document.createElement('span');el.textContent=k+': '+v;d.appendChild(el); }
         const avisoEstrutura=document.getElementById('validacaoEstrutura');
-        avisoEstrutura.textContent=r.estruturaValida?'Estrutura validada (100% e componentes classificados).':'Atenção: estrutura incompleta, não totaliza 100% ou possui componentes sem classificação.';
-        avisoEstrutura.className=r.estruturaValida?'':'alerta-estrutura';
+        avisoEstrutura.textContent=!r.estruturaValida?'Estrutura inválida: verifique os componentes.':Math.abs(Number(r.somaPercentual)-100)>=0.01?'Atenção: estrutura totaliza '+r.somaPercentual+'% (diferente de 100%). Registro permitido.':'Estrutura validada (100% e componentes classificados).';
+        avisoEstrutura.className=r.estruturaValida&&Math.abs(Number(r.somaPercentual)-100)<0.01?'':'alerta-estrutura';
         const tbody=document.getElementById('componentesOP');tbody.replaceChildren();
         for(const c of r.componentes){const tr=document.createElement('tr');for(const v of [c.codigo,c.descricao,c.tipo+(c.classificacao?' ('+c.classificacao+')':''),c.percentual===null?'Inválido':c.percentual+'%']){const td=document.createElement('td');td.textContent=String(v);tr.appendChild(td);}tbody.appendChild(tr);}
         const select=document.getElementById('injetoraOP');select.replaceChildren();
