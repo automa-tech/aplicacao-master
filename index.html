@@ -944,10 +944,27 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         qrLogin192=true;enviarLoginQr192();
       }
     });
+    // Etapa 1.93 — alguns leitores suprimem a quebra de linha do QR e
+    // enviam tudo no mesmo campo. Neste modo, a matrícula possui 5 dígitos.
+    let timerQrContinuo193=null;
     matricula.addEventListener('input',function(){
-      // Caso o leitor entregue o QR como texto contínuo, sem Enter entre campos,
-      // não adivinhar onde termina a matrícula: manter validação normal.
-      if(!/^\d*$/.test(matricula.value))qrLogin192=false;
+      clearTimeout(timerQrContinuo193);
+      if(telaLogin.hidden || form.hidden || ocupado)return;
+      const bruto=matricula.value;
+      // Aguarda o fim da digitação rápida do leitor; não tenta autenticar
+      // enquanto o QR ainda está chegando.
+      if(/^\d{5}.+/.test(bruto) && bruto.length>5){
+        timerQrContinuo193=setTimeout(function(){
+          if(telaLogin.hidden || form.hidden || ocupado)return;
+          const atual=matricula.value;
+          const achou=/^(\d{5})([^\r\n]+)$/.exec(atual);
+          if(!achou || !/[^0-9]/.test(achou[2]))return;
+          matricula.value=achou[1];
+          senha.value=achou[2];
+          qrLogin192=true;
+          enviarLoginQr192();
+        },300);
+      }
     });
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
