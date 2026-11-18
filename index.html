@@ -902,6 +902,53 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
       }catch(err){mensagem(err.message||'Erro ao alterar senha.',true);}
       finally{botao.disabled=false;}
     });
+    // Etapa 1.92 — QR Code de login: matrícula + quebra de linha + senha.
+    // O leitor pode transmitir a quebra de linha como Enter, Tab ou colagem.
+    let qrLogin192=false;
+    let timerQr192=null;
+    function enviarLoginQr192(){
+      clearTimeout(timerQr192);
+      if(!qrLogin192 || ocupado || telaLogin.hidden || form.hidden)return;
+      if(!/^\d{1,20}$/.test(matricula.value.trim()) || !senha.value)return;
+      qrLogin192=false;
+      form.requestSubmit();
+    }
+    function agendarLoginQr192(){
+      clearTimeout(timerQr192);
+      timerQr192=setTimeout(enviarLoginQr192,650);
+    }
+    matricula.addEventListener('keydown',function(e){
+      if(e.key==='Enter' || e.key==='Tab'){
+        if(/^\d{1,20}$/.test(matricula.value.trim())){
+          e.preventDefault();
+          qrLogin192=true;
+          senha.focus();
+        }
+      }
+    });
+    senha.addEventListener('input',function(){
+      if(qrLogin192)agendarLoginQr192();
+    });
+    senha.addEventListener('keydown',function(e){
+      if(e.key==='Enter' && qrLogin192){
+        e.preventDefault();
+        enviarLoginQr192();
+      }
+    });
+    matricula.addEventListener('paste',function(e){
+      const bruto=e.clipboardData?.getData('text')||'';
+      const partes=bruto.split(/\r\n|\n|\r/).map(v=>v.trim()).filter(Boolean);
+      if(partes.length===2 && /^\d{1,20}$/.test(partes[0]) && partes[1]){
+        e.preventDefault();
+        matricula.value=partes[0];senha.value=partes[1];
+        qrLogin192=true;enviarLoginQr192();
+      }
+    });
+    matricula.addEventListener('input',function(){
+      // Caso o leitor entregue o QR como texto contínuo, sem Enter entre campos,
+      // não adivinhar onde termina a matrícula: manter validação normal.
+      if(!/^\d*$/.test(matricula.value))qrLogin192=false;
+    });
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
       if (ocupado) return;
