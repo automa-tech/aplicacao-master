@@ -910,6 +910,9 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     let ultimoInput194=0;
     let velocidadeLeitor194=false;
     let timerQrContinuo193=null;
+    let inicioSenhaQr196=0;
+    let ultimoInputSenhaQr196=0;
+    let velocidadeSenhaQr196=false;
     function enviarLoginQr192(){
       clearTimeout(timerQr192);
       if(!qrLogin192 || ocupado || telaLogin.hidden || form.hidden)return;
@@ -919,6 +922,8 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
     }
     function agendarLoginQr192(){
       clearTimeout(timerQr192);
+      // Somente uma leitura de senha em velocidade de scanner autoriza o envio automático.
+      if(!qrLogin192 || !velocidadeSenhaQr196)return;
       timerQr192=setTimeout(enviarLoginQr192,650);
     }
     matricula.addEventListener('input',function(){
@@ -944,9 +949,23 @@ body:not(.gestao) main:has(#telaProducao:not([hidden])){background:#fffffff5}
         e.preventDefault();qrLogin192=true;senha.focus();
       }
     });
-    senha.addEventListener('input',function(){if(qrLogin192)agendarLoginQr192();});
+    senha.addEventListener('input',function(){
+      clearTimeout(timerQr192);
+      const agora=performance.now();
+      if(agora-ultimoInputSenhaQr196>250 || senha.value.length<=1){
+        inicioSenhaQr196=agora;
+        velocidadeSenhaQr196=false;
+      }
+      ultimoInputSenhaQr196=agora;
+      if(qrLogin192 && senha.value.length>=5 && agora-inicioSenhaQr196<450){
+        velocidadeSenhaQr196=true;
+      }
+      if(qrLogin192)agendarLoginQr192();
+    });
     senha.addEventListener('keydown',function(e){
-      if(e.key==='Enter' && qrLogin192){e.preventDefault();enviarLoginQr192();}
+      if(e.key==='Enter' && qrLogin192 && velocidadeSenhaQr196){
+        e.preventDefault();enviarLoginQr192();
+      }
     });
     matricula.addEventListener('paste',function(e){
       const bruto=e.clipboardData?.getData('text')||'';
